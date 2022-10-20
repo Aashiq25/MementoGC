@@ -94,6 +94,10 @@ public class PlanSpecificConfig {
         .addExpectedSpaces("default"),
         "NoGC");
     register(
+        new PlanSpecific("org.mmtk.plan.memento.MementoGC")
+        .addExpectedSpaces("nursery"),
+        "MementoGC");
+    register(
         new PlanSpecific("org.mmtk.plan.poisoned.Poisoned")
         .addExpectedSpaces("ms"),
         "Poisoned");
