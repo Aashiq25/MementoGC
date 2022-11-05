@@ -13,8 +13,15 @@
 package org.mmtk.plan.memento;
 
 import org.mmtk.plan.*;
+import org.mmtk.plan.generational.Gen;
+import org.mmtk.plan.generational.GenCollector;
+import org.mmtk.policy.CopyLocal;
+import org.mmtk.utility.ForwardingWord;
+import org.mmtk.utility.HeaderByte;
+import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.vm.VM;
 import org.vmmagic.pragma.*;
+import org.vmmagic.unboxed.*;
 
 /**
  * This class implements <i>per-collector thread</i> behavior and state
@@ -30,7 +37,7 @@ import org.vmmagic.pragma.*;
  * @see CollectorContext
  */
 @Uninterruptible
-public class MementoGCCollector extends ParallelCollector {
+public class MementoGCCollector extends GenCollector {
 
   /************************************************************************
    * Instance fields
@@ -39,8 +46,49 @@ public class MementoGCCollector extends ParallelCollector {
   /**
    *
    */
-  private final MementoGCTraceLocal trace = new MementoGCTraceLocal(global().trace);
-  protected final TraceLocal currentTrace = trace;
+  private final MementoGCTraceLocal trace;
+  protected final CopyLocal mature;
+
+
+  public MementoGCCollector() {
+    mature = new CopyLocal(MementoGC.toSpace());
+    trace = new MementoGCTraceLocal(global().trace, this);
+  }
+
+  @Override
+  @Inline
+  public Address allocCopy(ObjectReference original, int bytes,
+      int align, int offset, int allocator) {
+    if (allocator == Plan.ALLOC_LOS) {
+      if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(Allocator.getMaximumAlignedSize(bytes, align) > Plan.MAX_NON_LOS_COPY_BYTES);
+      return los.alloc(bytes, align, offset);
+    } else {
+      if (VM.VERIFY_ASSERTIONS) {
+        VM.assertions._assert(bytes <= Plan.MAX_NON_LOS_COPY_BYTES);
+        VM.assertions._assert(allocator == MementoGC.ALLOC_MATURE_MINORGC ||
+            allocator == MementoGC.ALLOC_MATURE_MAJORGC);
+      }
+      return mature.alloc(bytes, align, offset);
+    }
+  }
+
+  /**
+   * {@inheritDoc}<p>
+   *
+   * In this case we clear any bits used for this object's GC metadata.
+   */
+  @Override
+  @Inline
+  public final void postCopy(ObjectReference object, ObjectReference typeRef,
+      int bytes, int allocator) {
+    ForwardingWord.clearForwardingBits(object);
+    if (allocator == Plan.ALLOC_LOS)
+      Plan.loSpace.initializeHeader(object, false);
+    else if (MementoGC.IGNORE_REMSETS)
+      MementoGC.immortalSpace.traceObject(getCurrentTrace(), object); // FIXME this does not look right
+    if (Gen.USE_OBJECT_BARRIER)
+      HeaderByte.markAsUnlogged(object);
+  }
 
 
   /****************************************************************************
@@ -50,27 +98,27 @@ public class MementoGCCollector extends ParallelCollector {
   /**
    * Perform a garbage collection
    */
-  @Override
-  public final void collect() {
-    VM.assertions.fail("GC Triggered in memento Plan. Is -X:gc:ignoreSystemGC=true ?");
-  }
-
+  
   @Inline
   @Override
   public final void collectionPhase(short phaseId, boolean primary) {
-    VM.assertions.fail("GC Triggered in memento Plan.");
-    /*
-    if (phaseId == NoGC.PREPARE) {
+    // VM.assertions.fail("GC Triggered in memento Plan.");
+    if (global().traceFullHeap()) {
+      if (phaseId == MementoGC.PREPARE) {
+        super.collectionPhase(phaseId, primary);
+        if (global().gcFullHeap) mature.rebind(MementoGC.toSpace());
+      }
+      if (phaseId == MementoGC.CLOSURE) {
+        trace.completeTrace();
+        return;
+      }
+      if (phaseId == MementoGC.RELEASE) {
+        trace.release();
+        super.collectionPhase(phaseId, primary);
+        return;
+      }
     }
-
-    if (phaseId == NoGC.CLOSURE) {
-    }
-
-    if (phaseId == NoGC.RELEASE) {
-    }
-
     super.collectionPhase(phaseId, primary);
-    */
   }
 
   /****************************************************************************
@@ -78,13 +126,17 @@ public class MementoGCCollector extends ParallelCollector {
    */
 
   /** @return The active global plan as a <code>NoGC</code> instance. */
-  @Inline
   private static MementoGC global() {
     return (MementoGC) VM.activePlan.global();
   }
 
+  /** Show the status of the mature allocator. */
+  protected final void showMature() {
+    mature.show();
+  }
+
   @Override
-  public final TraceLocal getCurrentTrace() {
-    return currentTrace;
+  public final TraceLocal getFullHeapTrace() {
+    return trace;
   }
 }

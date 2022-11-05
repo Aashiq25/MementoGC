@@ -95,7 +95,7 @@ public class PlanSpecificConfig {
         "NoGC");
     register(
         new PlanSpecific("org.mmtk.plan.memento.MementoGC")
-        .addExpectedSpaces("nursery"),
+        .addExpectedSpaces("nursery","ms"),
         "MementoGC");
     register(
         new PlanSpecific("org.mmtk.plan.poisoned.Poisoned")

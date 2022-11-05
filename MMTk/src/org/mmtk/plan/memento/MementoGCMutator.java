@@ -12,15 +12,14 @@
  */
 package org.mmtk.plan.memento;
 
-import org.mmtk.plan.MutatorContext;
-import org.mmtk.policy.ImmortalLocal;
+import org.mmtk.plan.generational.GenMutator;
+import org.mmtk.policy.CopyLocal;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.vm.VM;
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.*;
 
-import org.mmtk.policy.CopyLocal;
 /**
  * This class implements <i>per-mutator thread</i> behavior and state
  * for the <i>NoGC</i> plan, which simply allocates (without ever collecting
@@ -37,7 +36,7 @@ import org.mmtk.policy.CopyLocal;
  * @see MutatorContext
  */
 @Uninterruptible
-public class MementoGCMutator extends MutatorContext {
+public class MementoGCMutator extends GenMutator {
 
   /************************************************************************
    * Instance fields
@@ -46,8 +45,18 @@ public class MementoGCMutator extends MutatorContext {
   /**
    *
    */
-  protected final CopyLocal nursery = new CopyLocal(MementoGC.nurserySpace);
+  protected final CopyLocal mature;
 
+
+  public MementoGCMutator() {
+    mature = new CopyLocal();
+  }
+
+  @Override
+  public void initMutator(int id) {
+    super.initMutator(id);
+    mature.rebind(MementoGC.toSpace());
+  }
 
   /****************************************************************************
    * Mutator-time allocation
@@ -61,6 +70,8 @@ public class MementoGCMutator extends MutatorContext {
   public Address alloc(int bytes, int align, int offset, int allocator, int site) {
     if (allocator == MementoGC.ALLOC_DEFAULT) {
       return nursery.alloc(bytes, align, offset);
+    }else if (allocator == MementoGC.ALLOC_MATURE){
+      return mature.alloc(bytes, align, offset);
     }
     return super.alloc(bytes, align, offset, allocator, site);
   }
@@ -69,14 +80,14 @@ public class MementoGCMutator extends MutatorContext {
   @Override
   public void postAlloc(ObjectReference ref, ObjectReference typeRef,
       int bytes, int allocator) {
-    if (allocator != MementoGC.ALLOC_DEFAULT) {
-      super.postAlloc(ref, typeRef, bytes, allocator);
-    }
+        if (allocator == MementoGC.ALLOC_MATURE || allocator == MementoGC.ALLOC_DEFAULT ) return;
+        super.postAlloc(ref, typeRef, bytes, allocator);
   }
 
   @Override
   public Allocator getAllocatorFromSpace(Space space) {
     if (space == MementoGC.nurserySpace) return nursery;
+    else if (space == MementoGC.nurserySpace) return mature;
     return super.getAllocatorFromSpace(space);
   }
 
@@ -92,13 +103,18 @@ public class MementoGCMutator extends MutatorContext {
   @Override
   public final void collectionPhase(short phaseId, boolean primary) {
     VM.assertions.fail("GC Triggered in MementoGC Plan.");
-    /*
-     if (phaseId == NoGC.PREPARE) {
-     }
+    if (global().traceFullHeap()) {
+      if (phaseId == MementoGC.RELEASE) {
+        super.collectionPhase(phaseId, primary);
+        if (global().gcFullHeap) mature.rebind(MementoGC.toSpace());
+        return;
+      }
+    }
 
-     if (phaseId == NoGC.RELEASE) {
-     }
-     super.collectionPhase(phaseId, primary);
-     */
+    super.collectionPhase(phaseId, primary);
+  }
+
+  private static MementoGC global() {
+    return (MementoGC) VM.activePlan.global();
   }
 }

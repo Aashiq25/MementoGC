@@ -13,6 +13,7 @@
 package org.mmtk.plan.memento;
 
 import org.mmtk.plan.PlanConstraints;
+import org.mmtk.plan.generational.GenConstraints;
 import org.vmmagic.pragma.*;
 
 /**
@@ -22,13 +23,5 @@ import org.vmmagic.pragma.*;
  * issues with ordering of static initialization.
  */
 @Uninterruptible
-public class MementoGCConstraints extends PlanConstraints {
-  @Override
-  public int gcHeaderBits() {
-    return 0;
-  }
-  @Override
-  public int gcHeaderWords() {
-    return 0;
-  }
+public class MementoGCConstraints extends GenConstraints {
 }
