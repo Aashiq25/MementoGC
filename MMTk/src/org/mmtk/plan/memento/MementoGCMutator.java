@@ -12,14 +12,14 @@
  */
 package org.mmtk.plan.memento;
 
-import org.mmtk.plan.MutatorContext;
+import org.mmtk.plan.StopTheWorldMutator;
 import org.mmtk.policy.ImmortalLocal;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.vm.VM;
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.*;
-
+import org.mmtk.utility.Log;
 import org.mmtk.policy.CopyLocal;
 /**
  * This class implements <i>per-mutator thread</i> behavior and state
@@ -37,7 +37,7 @@ import org.mmtk.policy.CopyLocal;
  * @see MutatorContext
  */
 @Uninterruptible
-public class MementoGCMutator extends MutatorContext {
+public class MementoGCMutator extends StopTheWorldMutator {
 
   /************************************************************************
    * Instance fields
@@ -48,6 +48,7 @@ public class MementoGCMutator extends MutatorContext {
    */
   protected final CopyLocal nursery = new CopyLocal(MementoGC.nurserySpace);
 
+  protected final CopyLocal mature = new CopyLocal(MementoGC.matureSpace);
 
   /****************************************************************************
    * Mutator-time allocation
@@ -61,6 +62,8 @@ public class MementoGCMutator extends MutatorContext {
   public Address alloc(int bytes, int align, int offset, int allocator, int site) {
     if (allocator == MementoGC.ALLOC_DEFAULT) {
       return nursery.alloc(bytes, align, offset);
+    } else if (allocator == MementoGC.ALLOC_MATURE) {
+      return mature.alloc(bytes, align, offset);
     }
     return super.alloc(bytes, align, offset, allocator, site);
   }
@@ -76,7 +79,10 @@ public class MementoGCMutator extends MutatorContext {
 
   @Override
   public Allocator getAllocatorFromSpace(Space space) {
-    if (space == MementoGC.nurserySpace) return nursery;
+    if (space == MementoGC.nurserySpace) {return nursery;}
+    else if (space == MementoGC.matureSpace) {
+      Log.writeln("Allocation in Mature");
+      return mature;}
     return super.getAllocatorFromSpace(space);
   }
 
@@ -91,14 +97,17 @@ public class MementoGCMutator extends MutatorContext {
   @Inline
   @Override
   public final void collectionPhase(short phaseId, boolean primary) {
-    VM.assertions.fail("GC Triggered in MementoGC Plan.");
-    /*
-     if (phaseId == NoGC.PREPARE) {
-     }
+   if (phaseId == MementoGC.PREPARE) {
+      nursery.reset();
+      super.collectionPhase(phaseId, primary);
+      return;
+    }
 
-     if (phaseId == NoGC.RELEASE) {
-     }
-     super.collectionPhase(phaseId, primary);
-     */
+    if (phaseId == MementoGC.RELEASE) {
+        super.collectionPhase(phaseId, primary);
+      return;
+    }
+
+    super.collectionPhase(phaseId, primary);
   }
 }

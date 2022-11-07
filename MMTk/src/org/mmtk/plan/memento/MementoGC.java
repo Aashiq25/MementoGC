@@ -25,7 +25,7 @@ import org.vmmagic.pragma.*;
  * without a collector.
  */
 @Uninterruptible
-public class MementoGC extends Plan {
+public class MementoGC extends StopTheWorld {
 
   /*****************************************************************************
    * Class variables
@@ -40,12 +40,18 @@ public class MementoGC extends Plan {
   protected static final float NURSERY_VM_FRACTION = 0.15f;
 
 
+  public static final int ALLOC_MATURE = StopTheWorld.ALLOCATORS + 1;
+
+
   /* The nursery space is where all new objects are allocated by default */
   private static final VMRequest vmRequest = USE_DISCONTIGUOUS_NURSERY ? VMRequest.discontiguous()
       : VMRequest.highFraction(NURSERY_VM_FRACTION);
   public static final CopySpace nurserySpace = new CopySpace("nursery", false, vmRequest);
   
   public static final int NURSERY = nurserySpace.getDescriptor();
+
+  static CopySpace matureSpace = new CopySpace("ss", false, VMRequest.discontiguous());
+  static final int MS = matureSpace.getDescriptor();
 
   /**
    *

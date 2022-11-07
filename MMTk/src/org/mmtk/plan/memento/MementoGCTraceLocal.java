@@ -17,6 +17,7 @@ import org.mmtk.plan.TraceLocal;
 import org.mmtk.policy.Space;
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.*;
+import org.mmtk.utility.Log;
 
 /**
  * This class implements the thread-local core functionality for a transitive
@@ -53,8 +54,10 @@ public final class MementoGCTraceLocal extends TraceLocal {
   @Override
   public ObjectReference traceObject(ObjectReference object) {
     if (object.isNull()) return object;
-    if (Space.isInSpace(MementoGC.NURSERY, object))
-      return MementoGC.nurserySpace.traceObject(this, object);
+    if (Space.isInSpace(MementoGC.NURSERY, object)) {
+      Log.writeln("Moving to Mature");
+      return MementoGC.nurserySpace.traceObject(this, object, MementoGC.ALLOC_MATURE);
+    }
     return super.traceObject(object);
   }
 }

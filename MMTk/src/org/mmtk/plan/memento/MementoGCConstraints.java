@@ -12,7 +12,7 @@
  */
 package org.mmtk.plan.memento;
 
-import org.mmtk.plan.PlanConstraints;
+import org.mmtk.plan.StopTheWorldConstraints;
 import org.vmmagic.pragma.*;
 
 /**
@@ -22,7 +22,7 @@ import org.vmmagic.pragma.*;
  * issues with ordering of static initialization.
  */
 @Uninterruptible
-public class MementoGCConstraints extends PlanConstraints {
+public class MementoGCConstraints extends StopTheWorldConstraints {
   @Override
   public int gcHeaderBits() {
     return 0;

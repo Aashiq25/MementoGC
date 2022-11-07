@@ -15,6 +15,8 @@ package org.mmtk.plan.memento;
 import org.mmtk.plan.*;
 import org.mmtk.vm.VM;
 import org.vmmagic.pragma.*;
+import org.mmtk.utility.Log;
+import org.mmtk.policy.CopyLocal;
 
 /**
  * This class implements <i>per-collector thread</i> behavior and state
@@ -30,7 +32,7 @@ import org.vmmagic.pragma.*;
  * @see CollectorContext
  */
 @Uninterruptible
-public class MementoGCCollector extends ParallelCollector {
+public class MementoGCCollector extends StopTheWorldCollector {
 
   /************************************************************************
    * Instance fields
@@ -39,8 +41,20 @@ public class MementoGCCollector extends ParallelCollector {
   /**
    *
    */
+  // private final MementoGCTraceLocal trace;
+  // protected final TraceLocal currentTrace;
+
+
+  // private final CopyLocal mature;
+
   private final MementoGCTraceLocal trace = new MementoGCTraceLocal(global().trace);
   protected final TraceLocal currentTrace = trace;
+
+//   public MementoGCCollector() {
+//     // mature = new CopyLocal(MementoGC.matureSpace);
+//     trace = new MementoGCTraceLocal(global().trace);
+//     currentTrace = trace;
+//  }
 
 
   /****************************************************************************
@@ -50,27 +64,36 @@ public class MementoGCCollector extends ParallelCollector {
   /**
    * Perform a garbage collection
    */
-  @Override
-  public final void collect() {
-    VM.assertions.fail("GC Triggered in memento Plan. Is -X:gc:ignoreSystemGC=true ?");
-  }
+  // @Override
+  // public final void collect() {
+  //   VM.assertions.fail("GC Triggered in memento Plan. Is -X:gc:ignoreSystemGC=true ?");
+  // }
 
   @Inline
   @Override
   public final void collectionPhase(short phaseId, boolean primary) {
-    VM.assertions.fail("GC Triggered in memento Plan.");
-    /*
-    if (phaseId == NoGC.PREPARE) {
+    VM.assertions.fail("GC Triggered in memento Plan. Is -X:gc:ignoreSystemGC=true ?");
+    Log.writeln("GC Collection Triggered");
+
+    if (phaseId == MementoGC.PREPARE) {
+      trace.prepare();
+      return;
+    }
+    if (phaseId == MementoGC.CLOSURE) {
+      // if (!global().gcFullHeap) {
+        trace.completeTrace();
+      // }
+      return;
     }
 
-    if (phaseId == NoGC.CLOSURE) {
-    }
-
-    if (phaseId == NoGC.RELEASE) {
+    if (phaseId == MementoGC.RELEASE) {
+      // if (!global().traceFullHeap()) {
+        trace.release();
+      // }
+      return;
     }
 
     super.collectionPhase(phaseId, primary);
-    */
   }
 
   /****************************************************************************
@@ -85,6 +108,10 @@ public class MementoGCCollector extends ParallelCollector {
 
   @Override
   public final TraceLocal getCurrentTrace() {
+    // if (global().traceFullHeap()) return getFullHeapTrace();
     return currentTrace;
   }
+
+  /** @return The trace to use when collecting the mature space */
+  // public abstract TraceLocal getFullHeapTrace();
 }
