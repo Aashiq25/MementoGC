@@ -64,6 +64,10 @@ public class PlanSpecificConfig {
         .addExpectedSpaces("nursery", "ms"),
         "CopyMS");
     register(
+	    new PlanSpecific("org.mmtk.plan.MementoCopyMS.MementoCopyMS")
+	    .addExpectedSpaces("eden", "survivor"),
+	    "MementoCopyMS");
+    register(
         new PlanSpecific("org.mmtk.plan.generational.copying.GenCopy")
         .addExpectedSpaces("nursery", "ss0", "ss1")
         .heapFactor(18816 / BASE_HEAP),
