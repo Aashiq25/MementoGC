@@ -1010,7 +1010,11 @@ public abstract class Plan {
   protected boolean collectionRequired(boolean spaceFull, Space space) {
     boolean stressForceGC = stressTestGCRequired();
     boolean heapFull = getPagesReserved() > getTotalPages();
-
+    Log.write("stressForceGc: ");
+    Log.write(stressForceGC);
+    Log.write(" Heapfull: ");
+    Log.write(heapFull);
+    Log.writeln();
     return spaceFull || stressForceGC || heapFull;
   }
 

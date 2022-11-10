@@ -18,7 +18,7 @@ import org.mmtk.policy.MarkSweepLocal;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.Log;
 import org.mmtk.utility.alloc.Allocator;
-
+import org.mmtk.utility.options.Options;
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.*;
 
@@ -47,7 +47,7 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
    *
    */
   private final MarkSweepLocal mature;
-  private final CopyLocal nursery;
+  private final CopyLocal nursery1, nursery2;
 
   /****************************************************************************
    *
@@ -59,7 +59,8 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
    */
   public MementoCopyMSMutator() {
     mature = new MarkSweepLocal(MementoCopyMS.survivorSpace);
-    nursery = new CopyLocal(MementoCopyMS.edenSpace);
+    nursery1 = new CopyLocal(MementoCopyMS.edenSpace1);
+    nursery2 = new CopyLocal(MementoCopyMS.edenSpace2);
   }
 
   /****************************************************************************
@@ -81,8 +82,21 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
     Log.write(" Allocator: ");
     Log.write(allocator);
     Log.writeln();
-    if (allocator == MementoCopyMS.ALLOC_DEFAULT)
-      return nursery.alloc(bytes, align, offset);
+    if (allocator == MementoCopyMS.ALLOC_DEFAULT) {
+    	Log.write("Nurser1 available physical page ");
+    	Log.write(nursery1.getSpace().availablePhysicalPages());
+    	Log.write(" Nursery1 reservered page");
+    	Log.write(nursery1.getSpace().reservedPages());
+    	Log.writeln();
+    	Log.write(" Nursery 1 maxNursery:");
+    	Log.write( Options.nurserySize.getMaxNursery());
+    	if (nursery1.getSpace().reservedPages() > Options.nurserySize.getMaxNursery()) {
+    		Log.writeln("Allocating in Nursery 2");
+    		return nursery2.alloc(bytes, align, offset);
+    	}
+      Log.writeln("Alocating in Nursery 1");
+      return nursery1.alloc(bytes, align, offset);
+    }
     if (allocator == MementoCopyMS.ALLOC_SURVIVOR)
       return mature.alloc(bytes, align, offset);
 
@@ -110,7 +124,8 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
 
   @Override
   public Allocator getAllocatorFromSpace(Space space) {
-    if (space == MementoCopyMS.edenSpace) return nursery;
+    if (space == MementoCopyMS.edenSpace1) return nursery1;
+    if (space == MementoCopyMS.edenSpace2) return nursery2;
     if (space == MementoCopyMS.survivorSpace) return mature;
     return super.getAllocatorFromSpace(space);
   }
@@ -133,7 +148,7 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
     }
 
     if (phaseId == MementoCopyMS.RELEASE) {
-      nursery.reset();
+      nursery1.reset();
       mature.release();
       super.collectionPhase(phaseId, primary);
       return;

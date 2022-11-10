@@ -59,10 +59,12 @@ public class MementoCopyMS extends StopTheWorld {
   /**
    *
    */
-  public static final CopySpace edenSpace = new CopySpace("eden", false, VMRequest.highFraction(0.10f));
+  public static final CopySpace edenSpace1 = new CopySpace("eden1", false, VMRequest.highFraction(0.20f));
+  public static final CopySpace edenSpace2 = new CopySpace("eden2", false, VMRequest.highFraction(0.20f));
   public static final MarkSweepSpace survivorSpace = new MarkSweepSpace("survivor", VMRequest.discontiguous());
 
-  public static final int EDEN = edenSpace.getDescriptor();
+  public static final int EDEN1 = edenSpace1.getDescriptor();
+  public static final int EDEN2 = edenSpace2.getDescriptor();
   public static final int SURVIVOR = survivorSpace.getDescriptor();
 
   public static final int ALLOC_EDEN = ALLOC_DEFAULT;
@@ -101,7 +103,8 @@ public class MementoCopyMS extends StopTheWorld {
       super.collectionPhase(phaseId);
       trace.prepare();
       survivorSpace.prepare(true);
-      edenSpace.prepare(true);
+      edenSpace1.prepare(true);
+      edenSpace2.prepare(true);
       return;
     }
     if (phaseId == CLOSURE) {
@@ -111,8 +114,10 @@ public class MementoCopyMS extends StopTheWorld {
     if (phaseId == RELEASE) {
       trace.release();
       survivorSpace.release();
-      edenSpace.release();
-      switchNurseryZeroingApproach(edenSpace);
+      edenSpace1.release();
+      edenSpace2.prepare(true);
+      switchNurseryZeroingApproach(edenSpace1);
+      switchNurseryZeroingApproach(edenSpace2);
       super.collectionPhase(phaseId);
       return;
     }
@@ -123,10 +128,19 @@ public class MementoCopyMS extends StopTheWorld {
   @Override
   public final boolean collectionRequired(boolean spaceFull, Space space) {
 	Log.writeln("Collection required for Memento");
-	edenSpace.printUsageMB();
-    boolean nurseryFull = edenSpace.reservedPages() > Options.nurserySize.getMaxNursery();
-
-    return super.collectionRequired(spaceFull, space) || nurseryFull;
+	Log.write("Eden 1 usage: ");
+	edenSpace1.printUsageMB();
+	Log.write("Eden 2 usage: ");
+	edenSpace2.printUsageMB();
+    boolean nurseryFull = (edenSpace1.reservedPages() + edenSpace2.reservedPages()) > (2 * Options.nurserySize.getMaxNursery());
+    Log.write("Is nursery full: ");
+    Log.writeln(nurseryFull);
+    Log.write("Space full: ");
+    Log.write(spaceFull);
+    boolean returnVal = super.collectionRequired(spaceFull, space);
+    Log.write("ReturnVal: ");
+    Log.write(returnVal);
+    return returnVal || nurseryFull;
   }
 
   /*****************************************************************************
@@ -141,7 +155,7 @@ public class MementoCopyMS extends StopTheWorld {
   public int getPagesUsed() {
     return super.getPagesUsed() +
       survivorSpace.reservedPages() +
-      edenSpace.reservedPages();
+      edenSpace1.reservedPages() + edenSpace2.reservedPages();
   }
 
   /**
@@ -150,7 +164,7 @@ public class MementoCopyMS extends StopTheWorld {
    */
   @Override
   public int getCollectionReserve() {
-    return edenSpace.reservedPages() + super.getCollectionReserve();
+    return edenSpace1.reservedPages() + edenSpace2.reservedPages() + super.getCollectionReserve();
   }
 
   /**
@@ -167,7 +181,7 @@ public class MementoCopyMS extends StopTheWorld {
     Space space = Space.getSpaceForObject(object);
 
     // Nursery
-    if (space == MementoCopyMS.edenSpace) {
+    if (space == MementoCopyMS.edenSpace1 || space == MementoCopyMS.edenSpace2) {
       return SanityChecker.DEAD;
     }
 
@@ -185,6 +199,8 @@ public class MementoCopyMS extends StopTheWorld {
   @Override
   public void fullyBooted() {
     super.fullyBooted();
-    edenSpace.setZeroingApproach(Options.nurseryZeroing.getNonTemporal(), Options.nurseryZeroing.getConcurrent());
+    edenSpace1.setZeroingApproach(Options.nurseryZeroing.getNonTemporal(), Options.nurseryZeroing.getConcurrent());
+    edenSpace2.setZeroingApproach(Options.nurseryZeroing.getNonTemporal(), Options.nurseryZeroing.getConcurrent());
+
   }
 }

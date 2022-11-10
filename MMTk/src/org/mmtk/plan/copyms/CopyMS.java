@@ -16,6 +16,7 @@ import org.mmtk.plan.*;
 import org.mmtk.policy.CopySpace;
 import org.mmtk.policy.MarkSweepSpace;
 import org.mmtk.policy.Space;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.heap.VMRequest;
 import org.mmtk.utility.options.Options;
 import org.mmtk.utility.sanitychecker.SanityChecker;
@@ -83,6 +84,7 @@ public class CopyMS extends StopTheWorld {
  */
   public CopyMS() {
     trace = new Trace(metaDataSpace);
+    Log.writeln("Hello World");
   }
 
 

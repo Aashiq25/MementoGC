@@ -65,7 +65,7 @@ public class PlanSpecificConfig {
         "CopyMS");
     register(
 	    new PlanSpecific("org.mmtk.plan.MementoCopyMS.MementoCopyMS")
-	    .addExpectedSpaces("eden", "survivor"),
+	    .addExpectedSpaces("eden1", "eden2", "survivor"),
 	    "MementoCopyMS");
     register(
         new PlanSpecific("org.mmtk.plan.generational.copying.GenCopy")
