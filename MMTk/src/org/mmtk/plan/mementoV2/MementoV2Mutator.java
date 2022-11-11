@@ -10,7 +10,7 @@
  *  See the COPYRIGHT.txt file distributed with this work for information
  *  regarding copyright ownership.
  */
-package org.mmtk.plan.MementoCopyMS;
+package org.mmtk.plan.mementoV2;
 
 import org.mmtk.plan.StopTheWorldMutator;
 import org.mmtk.policy.CopyLocal;
@@ -31,13 +31,13 @@ import org.vmmagic.unboxed.*;
  * Per-mutator thread collection semantics are also defined (flushing
  * and restoring per-mutator allocator state).
  *
- * @see MementoCopyMS
- * @see MementoCopyMSCollector
+ * @see MementoV2
+ * @see MementoV2Collector
  * @see org.mmtk.plan.StopTheWorldMutator
  * @see org.mmtk.plan.MutatorContext
  */
 @Uninterruptible
-public class MementoCopyMSMutator extends StopTheWorldMutator {
+public class MementoV2Mutator extends StopTheWorldMutator {
 
   /****************************************************************************
    * Instance fields
@@ -57,10 +57,10 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
   /**
    * Constructor
    */
-  public MementoCopyMSMutator() {
-    mature = new MarkSweepLocal(MementoCopyMS.survivorSpace);
-    nursery1 = new CopyLocal(MementoCopyMS.edenSpace1);
-    nursery2 = new CopyLocal(MementoCopyMS.edenSpace2);
+  public MementoV2Mutator() {
+    mature = new MarkSweepLocal(MementoV2.survivorSpace);
+    nursery1 = new CopyLocal(MementoV2.edenSpace1);
+    nursery2 = new CopyLocal(MementoV2.edenSpace2);
   }
 
   /****************************************************************************
@@ -82,22 +82,22 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
     Log.write(" Allocator: ");
     Log.write(allocator);
     Log.writeln();
-    if (allocator == MementoCopyMS.ALLOC_DEFAULT) {
-    	Log.write("Nurser1 available physical page ");
+    if (allocator == MementoV2.ALLOC_DEFAULT) {
+    	Log.write("Nursery 1 available physical page ");
     	Log.write(nursery1.getSpace().availablePhysicalPages());
-    	Log.write(" Nursery1 reservered page");
+    	Log.write(" Nursery 1 reservered page");
     	Log.write(nursery1.getSpace().reservedPages());
     	Log.writeln();
-    	Log.write(" Nursery 1 maxNursery:");
+    	Log.write("Nursery 1 maxNursery: ");
     	Log.write( Options.nurserySize.getMaxNursery());
-    	if (nursery1.getSpace().reservedPages() > Options.nurserySize.getMaxNursery()) {
-    		Log.writeln("Allocating in Nursery 2");
+    	Log.writeln();	if (nursery1.getSpace().reservedPages() > 2000) {
+    		Log.writeln(" Allocating in Nursery 2");
     		return nursery2.alloc(bytes, align, offset);
     	}
-      Log.writeln("Alocating in Nursery 1");
+      Log.writeln(" Allocating in Nursery 1");
       return nursery1.alloc(bytes, align, offset);
     }
-    if (allocator == MementoCopyMS.ALLOC_SURVIVOR)
+    if (allocator == MementoV2.ALLOC_SURVIVOR)
       return mature.alloc(bytes, align, offset);
 
     return super.alloc(bytes, align, offset, allocator, site);
@@ -114,19 +114,19 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
   @Inline
   public void postAlloc(ObjectReference ref, ObjectReference typeRef,
       int bytes, int allocator) {
-    if (allocator == MementoCopyMS.ALLOC_DEFAULT)
+    if (allocator == MementoV2.ALLOC_DEFAULT)
       return;
-    else if (allocator == MementoCopyMS.ALLOC_SURVIVOR)
-      MementoCopyMS.survivorSpace.initializeHeader(ref, true);
+    else if (allocator == MementoV2.ALLOC_SURVIVOR)
+      MementoV2.survivorSpace.initializeHeader(ref, true);
     else
       super.postAlloc(ref, typeRef, bytes, allocator);
   }
 
   @Override
   public Allocator getAllocatorFromSpace(Space space) {
-    if (space == MementoCopyMS.edenSpace1) return nursery1;
-    if (space == MementoCopyMS.edenSpace2) return nursery2;
-    if (space == MementoCopyMS.survivorSpace) return mature;
+    if (space == MementoV2.edenSpace1) return nursery1;
+    if (space == MementoV2.edenSpace2) return nursery2;
+    if (space == MementoV2.survivorSpace) return mature;
     return super.getAllocatorFromSpace(space);
   }
 
@@ -141,13 +141,13 @@ public class MementoCopyMSMutator extends StopTheWorldMutator {
   @Override
   @Inline
   public final void collectionPhase(short phaseId, boolean primary) {
-    if (phaseId == MementoCopyMS.PREPARE) {
+    if (phaseId == MementoV2.PREPARE) {
       super.collectionPhase(phaseId, primary);
       mature.prepare();
       return;
     }
 
-    if (phaseId == MementoCopyMS.RELEASE) {
+    if (phaseId == MementoV2.RELEASE) {
       nursery1.reset();
       mature.release();
       super.collectionPhase(phaseId, primary);

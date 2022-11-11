@@ -10,7 +10,7 @@
  *  See the COPYRIGHT.txt file distributed with this work for information
  *  regarding copyright ownership.
  */
-package org.mmtk.plan.MementoCopyMS;
+package org.mmtk.plan.mementoV2;
 
 import org.mmtk.plan.*;
 import org.mmtk.policy.CopyLocal;
@@ -32,13 +32,13 @@ import org.vmmagic.unboxed.*;
  * the <code>collectionPhase</code> method), and
  * collection-time allocation into the mature space.
  *
- * @see MementoCopyMS
- * @see MementoCopyMSMutator
+ * @see MementoV2
+ * @see MementoV2Mutator
  * @see StopTheWorldCollector
  * @see CollectorContext
  */
 @Uninterruptible
-public class MementoCopyMSCollector extends StopTheWorldCollector {
+public class MementoV2Collector extends StopTheWorldCollector {
 
   /****************************************************************************
    * Instance fields
@@ -48,7 +48,7 @@ public class MementoCopyMSCollector extends StopTheWorldCollector {
    *
    */
   private final MarkSweepLocal mature;
-  private final MementoCopyMSTraceLocal trace;
+  private final MementoV2TraceLocal trace;
 
   protected final LargeObjectLocal los;
 
@@ -60,10 +60,10 @@ public class MementoCopyMSCollector extends StopTheWorldCollector {
   /**
    * Create a new (local) instance.
    */
-  public MementoCopyMSCollector() {
+  public MementoV2Collector() {
     los = new LargeObjectLocal(Plan.loSpace);
-    mature = new MarkSweepLocal(MementoCopyMS.survivorSpace);
-    trace = new MementoCopyMSTraceLocal(global().trace);
+    mature = new MarkSweepLocal(MementoV2.survivorSpace);
+    trace = new MementoV2TraceLocal(global().trace);
  }
 
   /****************************************************************************
@@ -89,7 +89,7 @@ public class MementoCopyMSCollector extends StopTheWorldCollector {
     } else {
       if (VM.VERIFY_ASSERTIONS) {
         VM.assertions._assert(bytes <= Plan.MAX_NON_LOS_COPY_BYTES);
-        VM.assertions._assert(allocator == MementoCopyMS.ALLOC_SURVIVOR);
+        VM.assertions._assert(allocator == MementoV2.ALLOC_SURVIVOR);
       }
       return mature.alloc(bytes, align, offset);
     }
@@ -102,7 +102,7 @@ public class MementoCopyMSCollector extends StopTheWorldCollector {
     if (allocator == Plan.ALLOC_LOS)
       Plan.loSpace.initializeHeader(object, false);
     else
-      MementoCopyMS.survivorSpace.postCopy(object, true);
+      MementoV2.survivorSpace.postCopy(object, true);
   }
 
   /****************************************************************************
@@ -116,19 +116,19 @@ public class MementoCopyMSCollector extends StopTheWorldCollector {
   @Override
   @Inline
   public final void collectionPhase(short phaseId, boolean primary) {
-    if (phaseId == MementoCopyMS.PREPARE) {
+    if (phaseId == MementoV2.PREPARE) {
       super.collectionPhase(phaseId, primary);
       mature.prepare();
       trace.prepare();
       return;
     }
 
-    if (phaseId == MementoCopyMS.CLOSURE) {
+    if (phaseId == MementoV2.CLOSURE) {
       trace.completeTrace();
       return;
     }
 
-    if (phaseId == MementoCopyMS.RELEASE) {
+    if (phaseId == MementoV2.RELEASE) {
       mature.release();
       trace.release();
       super.collectionPhase(phaseId, primary);
@@ -145,8 +145,8 @@ public class MementoCopyMSCollector extends StopTheWorldCollector {
 
   /** @return the active global plan as an <code>MS</code> instance. */
   @Inline
-  private static MementoCopyMS global() {
-    return (MementoCopyMS) VM.activePlan.global();
+  private static MementoV2 global() {
+    return (MementoV2) VM.activePlan.global();
   }
 
   /** @return The current trace instance. */

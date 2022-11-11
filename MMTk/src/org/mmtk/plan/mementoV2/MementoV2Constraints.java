@@ -10,7 +10,7 @@
  *  See the COPYRIGHT.txt file distributed with this work for information
  *  regarding copyright ownership.
  */
-package org.mmtk.plan.MementoCopyMS;
+package org.mmtk.plan.mementoV2;
 
 import org.mmtk.plan.StopTheWorldConstraints;
 
@@ -26,7 +26,7 @@ import org.vmmagic.pragma.*;
  * issues with ordering of static initialization.
  */
 @Uninterruptible
-public class MementoCopyMSConstraints extends StopTheWorldConstraints {
+public class MementoV2Constraints extends StopTheWorldConstraints {
 
   @Override
   public int gcHeaderBits() {

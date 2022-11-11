@@ -10,7 +10,7 @@
  *  See the COPYRIGHT.txt file distributed with this work for information
  *  regarding copyright ownership.
  */
-package org.mmtk.plan.MementoCopyMS;
+package org.mmtk.plan.mementoV2;
 
 import org.mmtk.plan.TraceLocal;
 import org.mmtk.plan.Trace;
@@ -24,13 +24,13 @@ import org.vmmagic.unboxed.*;
  * transitive closure over a coping/mark-sweep hybrid collector.
  */
 @Uninterruptible
-public final class MementoCopyMSTraceLocal extends TraceLocal {
+public final class MementoV2TraceLocal extends TraceLocal {
 
   /**
    * @param trace the global trace class to use
    */
-  public MementoCopyMSTraceLocal(Trace trace) {
-    super(MementoCopyMS.SCAN_MEMENTO, trace);
+  public MementoV2TraceLocal(Trace trace) {
+    super(MementoV2.SCAN_MEMENTO, trace);
   }
 
   /****************************************************************************
@@ -44,14 +44,14 @@ public final class MementoCopyMSTraceLocal extends TraceLocal {
   @Override
   public boolean isLive(ObjectReference object) {
     if (object.isNull()) return false;
-    if (Space.isInSpace(MementoCopyMS.EDEN1, object)) {
-      return MementoCopyMS.edenSpace1.isLive(object);
+    if (Space.isInSpace(MementoV2.EDEN1, object)) {
+      return MementoV2.edenSpace1.isLive(object);
     }
-    if (Space.isInSpace(MementoCopyMS.EDEN2, object)) {
-        return MementoCopyMS.edenSpace2.isLive(object);
+    if (Space.isInSpace(MementoV2.EDEN2, object)) {
+        return MementoV2.edenSpace2.isLive(object);
       }
-    if (Space.isInSpace(MementoCopyMS.SURVIVOR, object)) {
-      return MementoCopyMS.survivorSpace.isLive(object);
+    if (Space.isInSpace(MementoV2.SURVIVOR, object)) {
+      return MementoV2.survivorSpace.isLive(object);
     }
     return super.isLive(object);
   }
@@ -66,12 +66,12 @@ public final class MementoCopyMSTraceLocal extends TraceLocal {
   @Override
   public ObjectReference traceObject(ObjectReference object) {
     if (object.isNull()) return object;
-    if (Space.isInSpace(MementoCopyMS.EDEN1, object))
-      return MementoCopyMS.edenSpace1.traceObject(this, object, MementoCopyMS.ALLOC_SURVIVOR);
-    if (Space.isInSpace(MementoCopyMS.EDEN2, object))
-        return MementoCopyMS.edenSpace2.traceObject(this, object, MementoCopyMS.ALLOC_SURVIVOR);
-    if (Space.isInSpace(MementoCopyMS.SURVIVOR, object))
-      return MementoCopyMS.survivorSpace.traceObject(this, object);
+    if (Space.isInSpace(MementoV2.EDEN1, object))
+      return MementoV2.edenSpace1.traceObject(this, object, MementoV2.ALLOC_SURVIVOR);
+    if (Space.isInSpace(MementoV2.EDEN2, object))
+        return MementoV2.edenSpace2.traceObject(this, object, MementoV2.ALLOC_SURVIVOR);
+    if (Space.isInSpace(MementoV2.SURVIVOR, object))
+      return MementoV2.survivorSpace.traceObject(this, object);
     return super.traceObject(object);
   }
 
@@ -82,6 +82,6 @@ public final class MementoCopyMSTraceLocal extends TraceLocal {
    */
   @Override
   public boolean willNotMoveInCurrentCollection(ObjectReference object) {
-    return !(Space.isInSpace(MementoCopyMS.EDEN1, object) && Space.isInSpace(MementoCopyMS.EDEN2, object));
+    return !(Space.isInSpace(MementoV2.EDEN1, object) && Space.isInSpace(MementoV2.EDEN2, object));
   }
 }

@@ -10,7 +10,7 @@
  *  See the COPYRIGHT.txt file distributed with this work for information
  *  regarding copyright ownership.
  */
-package org.mmtk.plan.MementoCopyMS;
+package org.mmtk.plan.mementoV2;
 
 import org.mmtk.plan.*;
 import org.mmtk.policy.CopySpace;
@@ -46,7 +46,7 @@ import org.vmmagic.unboxed.ObjectReference;
  * performance properties of MMTk plans.
  */
 @Uninterruptible
-public class MementoCopyMS extends StopTheWorld {
+public class MementoV2 extends StopTheWorld {
 
   /****************************************************************************
    * Constants
@@ -84,7 +84,7 @@ public class MementoCopyMS extends StopTheWorld {
   /**
    * Constructor.
  */
-  public MementoCopyMS() {
+  public MementoV2() {
     trace = new Trace(metaDataSpace);
   }
 
@@ -132,13 +132,15 @@ public class MementoCopyMS extends StopTheWorld {
 	edenSpace1.printUsageMB();
 	Log.write("Eden 2 usage: ");
 	edenSpace2.printUsageMB();
-    boolean nurseryFull = (edenSpace1.reservedPages() + edenSpace2.reservedPages()) > (2 * Options.nurserySize.getMaxNursery());
+    boolean nurseryFull = (edenSpace1.reservedPages() + edenSpace2.reservedPages()) > (2 * 2000
+//    		Options.nurserySize.getMaxNursery()
+    		);
     Log.write("Is nursery full: ");
     Log.writeln(nurseryFull);
-    Log.write("Space full: ");
+    Log.write(" Space full: ");
     Log.write(spaceFull);
     boolean returnVal = super.collectionRequired(spaceFull, space);
-    Log.write("ReturnVal: ");
+    Log.write(" ReturnVal: ");
     Log.write(returnVal);
     return returnVal || nurseryFull;
   }
@@ -181,7 +183,7 @@ public class MementoCopyMS extends StopTheWorld {
     Space space = Space.getSpaceForObject(object);
 
     // Nursery
-    if (space == MementoCopyMS.edenSpace1 || space == MementoCopyMS.edenSpace2) {
+    if (space == MementoV2.edenSpace1 || space == MementoV2.edenSpace2) {
       return SanityChecker.DEAD;
     }
 
@@ -191,7 +193,7 @@ public class MementoCopyMS extends StopTheWorld {
   @Override
   @Interruptible
   protected void registerSpecializedMethods() {
-    TransitiveClosure.registerSpecializedScan(SCAN_MEMENTO, MementoCopyMSTraceLocal.class);
+    TransitiveClosure.registerSpecializedScan(SCAN_MEMENTO, MementoV2TraceLocal.class);
     super.registerSpecializedMethods();
   }
 
