@@ -70,8 +70,8 @@ public final class MementoV2TraceLocal extends TraceLocal {
       return MementoV2.edenSpace1.traceObject(this, object, MementoV2.ALLOC_SURVIVOR);
     if (Space.isInSpace(MementoV2.EDEN2, object))
         return MementoV2.edenSpace2.traceObject(this, object, MementoV2.ALLOC_SURVIVOR);
-    if (Space.isInSpace(MementoV2.SURVIVOR, object))
-      return MementoV2.survivorSpace.traceObject(this, object);
+//    if (Space.isInSpace(MementoV2.SURVIVOR, object))
+//      return MementoV2.survivorSpace.traceObject(this, object);
     return super.traceObject(object);
   }
 
@@ -82,6 +82,6 @@ public final class MementoV2TraceLocal extends TraceLocal {
    */
   @Override
   public boolean willNotMoveInCurrentCollection(ObjectReference object) {
-    return !(Space.isInSpace(MementoV2.EDEN1, object) && Space.isInSpace(MementoV2.EDEN2, object));
+    return !(Space.isInSpace(MementoV2.EDEN1, object) || Space.isInSpace(MementoV2.EDEN2, object));
   }
 }

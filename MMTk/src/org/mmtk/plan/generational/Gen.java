@@ -223,17 +223,18 @@ public abstract class Gen extends StopTheWorld {
   }
 
   @Override
-  public final boolean collectionRequired(boolean spaceFull, Space space) {
+  public boolean collectionRequired(boolean spaceFull, Space space) {
     int availableNurseryPages = Options.nurserySize.getMaxNursery() - nurserySpace.reservedPages();
 
     /* periodically recalculate nursery pretenure threshold */
     Plan.pretenureThreshold = (int) (pagesToBytes(availableNurseryPages).toInt() * Options.pretenureThresholdFraction.getValue());
-
     if (availableNurseryPages <= 0) {
+    	Log.writeln("Available nursery space less than 0 Collection triggered.");
       return true;
     }
 
     if (virtualMemoryExhausted()) {
+    	Log.writeln("Virtual memory exhausted.");
       return true;
     }
 

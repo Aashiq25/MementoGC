@@ -64,9 +64,13 @@ public class PlanSpecificConfig {
         .addExpectedSpaces("nursery", "ms"),
         "CopyMS");
     register(
-	    new PlanSpecific("org.mmtk.plan.mementoV2.MementoV2")
-	    .addExpectedSpaces("eden1", "eden2", "survivor"),
-	    "MementoCopyMS");
+	    new PlanSpecific("org.mmtk.plan.mementov3.MementoV3")
+	    .addExpectedSpaces("nursery", "ss0"),
+	    "MementoV3");
+    register(
+  	    new PlanSpecific("org.mmtk.plan.mementoV2.MementoV2")
+  	    .addExpectedSpaces("eden1", "eden2", "survivor"),
+  	    "MementoV2");
     register(
         new PlanSpecific("org.mmtk.plan.generational.copying.GenCopy")
         .addExpectedSpaces("nursery", "ss0", "ss1")

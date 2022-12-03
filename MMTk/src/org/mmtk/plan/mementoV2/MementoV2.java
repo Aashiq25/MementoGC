@@ -61,7 +61,7 @@ public class MementoV2 extends StopTheWorld {
    */
   public static final CopySpace edenSpace1 = new CopySpace("eden1", false, VMRequest.highFraction(0.20f));
   public static final CopySpace edenSpace2 = new CopySpace("eden2", false, VMRequest.highFraction(0.20f));
-  public static final MarkSweepSpace survivorSpace = new MarkSweepSpace("survivor", VMRequest.discontiguous());
+  public static final CopySpace survivorSpace = new CopySpace("survivor", false, VMRequest.highFraction(0.40f));
 
   public static final int EDEN1 = edenSpace1.getDescriptor();
   public static final int EDEN2 = edenSpace2.getDescriptor();
@@ -115,7 +115,7 @@ public class MementoV2 extends StopTheWorld {
       trace.release();
       survivorSpace.release();
       edenSpace1.release();
-      edenSpace2.prepare(true);
+      edenSpace2.release();
       switchNurseryZeroingApproach(edenSpace1);
       switchNurseryZeroingApproach(edenSpace2);
       super.collectionPhase(phaseId);
@@ -132,7 +132,7 @@ public class MementoV2 extends StopTheWorld {
 	edenSpace1.printUsageMB();
 	Log.write("Eden 2 usage: ");
 	edenSpace2.printUsageMB();
-    boolean nurseryFull = (edenSpace1.reservedPages() + edenSpace2.reservedPages()) > (2 * 2000
+    boolean nurseryFull = (edenSpace1.reservedPages() + edenSpace2.reservedPages()) > (2 * 500
 //    		Options.nurserySize.getMaxNursery()
     		);
     Log.write("Is nursery full: ");

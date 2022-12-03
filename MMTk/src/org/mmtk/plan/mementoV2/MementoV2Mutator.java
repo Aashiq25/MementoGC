@@ -46,7 +46,7 @@ public class MementoV2Mutator extends StopTheWorldMutator {
   /**
    *
    */
-  private final MarkSweepLocal mature;
+  private final CopyLocal mature;
   private final CopyLocal nursery1, nursery2;
 
   /****************************************************************************
@@ -58,7 +58,7 @@ public class MementoV2Mutator extends StopTheWorldMutator {
    * Constructor
    */
   public MementoV2Mutator() {
-    mature = new MarkSweepLocal(MementoV2.survivorSpace);
+    mature = new CopyLocal(MementoV2.survivorSpace);
     nursery1 = new CopyLocal(MementoV2.edenSpace1);
     nursery2 = new CopyLocal(MementoV2.edenSpace2);
   }
@@ -83,22 +83,14 @@ public class MementoV2Mutator extends StopTheWorldMutator {
     Log.write(allocator);
     Log.writeln();
     if (allocator == MementoV2.ALLOC_DEFAULT) {
-    	Log.write("Nursery 1 available physical page ");
-    	Log.write(nursery1.getSpace().availablePhysicalPages());
-    	Log.write(" Nursery 1 reservered page");
-    	Log.write(nursery1.getSpace().reservedPages());
-    	Log.writeln();
-    	Log.write("Nursery 1 maxNursery: ");
-    	Log.write( Options.nurserySize.getMaxNursery());
-    	Log.writeln();	if (nursery1.getSpace().reservedPages() > 2000) {
-    		Log.writeln(" Allocating in Nursery 2");
+    	if (nursery1.getSpace().reservedPages() > 500) {
     		return nursery2.alloc(bytes, align, offset);
     	}
-      Log.writeln(" Allocating in Nursery 1");
       return nursery1.alloc(bytes, align, offset);
     }
-    if (allocator == MementoV2.ALLOC_SURVIVOR)
+    if (allocator == MementoV2.ALLOC_SURVIVOR) {
       return mature.alloc(bytes, align, offset);
+    }
 
     return super.alloc(bytes, align, offset, allocator, site);
   }
@@ -117,7 +109,7 @@ public class MementoV2Mutator extends StopTheWorldMutator {
     if (allocator == MementoV2.ALLOC_DEFAULT)
       return;
     else if (allocator == MementoV2.ALLOC_SURVIVOR)
-      MementoV2.survivorSpace.initializeHeader(ref, true);
+      return;
     else
       super.postAlloc(ref, typeRef, bytes, allocator);
   }
@@ -141,15 +133,17 @@ public class MementoV2Mutator extends StopTheWorldMutator {
   @Override
   @Inline
   public final void collectionPhase(short phaseId, boolean primary) {
+  	Log.write("Collection phase in Mutator phaseId Val: ");
+  	Log.write(phaseId);
+  	Log.writeln();
     if (phaseId == MementoV2.PREPARE) {
       super.collectionPhase(phaseId, primary);
-      mature.prepare();
       return;
     }
 
     if (phaseId == MementoV2.RELEASE) {
       nursery1.reset();
-      mature.release();
+      nursery2.reset();
       super.collectionPhase(phaseId, primary);
       return;
     }
@@ -160,6 +154,5 @@ public class MementoV2Mutator extends StopTheWorldMutator {
   @Override
   public void flush() {
     super.flush();
-    mature.flush();
   }
 }

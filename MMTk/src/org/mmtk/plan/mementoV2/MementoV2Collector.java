@@ -47,7 +47,7 @@ public class MementoV2Collector extends StopTheWorldCollector {
   /**
    *
    */
-  private final MarkSweepLocal mature;
+  private final CopyLocal mature;
   private final MementoV2TraceLocal trace;
 
   protected final LargeObjectLocal los;
@@ -62,7 +62,7 @@ public class MementoV2Collector extends StopTheWorldCollector {
    */
   public MementoV2Collector() {
     los = new LargeObjectLocal(Plan.loSpace);
-    mature = new MarkSweepLocal(MementoV2.survivorSpace);
+    mature = new CopyLocal(MementoV2.survivorSpace);
     trace = new MementoV2TraceLocal(global().trace);
  }
 
@@ -101,8 +101,6 @@ public class MementoV2Collector extends StopTheWorldCollector {
       int bytes, int allocator) {
     if (allocator == Plan.ALLOC_LOS)
       Plan.loSpace.initializeHeader(object, false);
-    else
-      MementoV2.survivorSpace.postCopy(object, true);
   }
 
   /****************************************************************************
@@ -116,9 +114,12 @@ public class MementoV2Collector extends StopTheWorldCollector {
   @Override
   @Inline
   public final void collectionPhase(short phaseId, boolean primary) {
+  	Log.write("CollectionPhase Collector phaseId:");
+  	Log.write(phaseId);
+  	Log.writeln();
     if (phaseId == MementoV2.PREPARE) {
       super.collectionPhase(phaseId, primary);
-      mature.prepare();
+      
       trace.prepare();
       return;
     }
@@ -129,7 +130,6 @@ public class MementoV2Collector extends StopTheWorldCollector {
     }
 
     if (phaseId == MementoV2.RELEASE) {
-      mature.release();
       trace.release();
       super.collectionPhase(phaseId, primary);
       return;
