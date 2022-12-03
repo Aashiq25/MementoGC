@@ -10,7 +10,7 @@
  *  See the COPYRIGHT.txt file distributed with this work for information
  *  regarding copyright ownership.
  */
-package org.mmtk.plan.mementov3;
+package org.mmtk.plan.mementov4;
 
 import org.mmtk.policy.CopySpace;
 import org.mmtk.policy.Space;
@@ -53,7 +53,7 @@ import org.vmmagic.pragma.*;
  * instances is crucial to understanding the correctness and
  * performance properties of this plan.
  */
-@Uninterruptible public class MementoV3 extends Gen {
+@Uninterruptible public class MementoV4 extends Gen {
 
   /****************************************************************************
    *
@@ -66,13 +66,20 @@ import org.vmmagic.pragma.*;
    * <code>true</code> if copying to "higher" semispace
    */
 
-
   /**
    * The low half of the copying mature space.  We allocate into this space
    * when <code>hi</code> is <code>false</code>.
    */
-  static CopySpace matureSpace = new CopySpace("ss0", false, VMRequest.discontiguous());
-  static final int MS = matureSpace.getDescriptor();
+  static CopySpace survivorSpace = new CopySpace("survivor", false, VMRequest.highFraction(0.1f));
+  static final int SURVIVOR = survivorSpace.getDescriptor();
+  
+
+  /**
+   * The high half of the copying mature space. We allocate into this space
+   * when <code>hi</code> is <code>true</code>.
+   */
+  static CopySpace oldGenSpace = new CopySpace("oldgen", false, VMRequest.highFraction(0.2f));
+  static final int OLDGEN = oldGenSpace.getDescriptor();
 
 
   /****************************************************************************
@@ -88,7 +95,7 @@ import org.vmmagic.pragma.*;
   /**
    * Constructor
    */
-  public MementoV3() {
+  public MementoV4() {
     super();
     if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!IGNORE_REMSETS); // Not supported for GenCopy
     matureTrace = new Trace(metaDataSpace);
@@ -98,16 +105,30 @@ import org.vmmagic.pragma.*;
    * @return The semispace we are currently allocating into
    */
   static CopySpace toSpace() {
-    return matureSpace;
+    return oldGenSpace;
   }
 
   /**
    * @return Space descriptor for to-space.
    */
   static int toSpaceDesc() {
-    return MS;
+    return OLDGEN;
   }
 
+  /**
+   * @return The semispace we are currently copying from
+   * (or copied from at last major GC)
+   */
+  static CopySpace fromSpace() {
+    return survivorSpace;
+  }
+
+  /**
+   * @return Space descriptor for from-space
+   */
+  static int fromSpaceDesc() {
+    return SURVIVOR;
+  }
 
   /****************************************************************************
    *
@@ -121,9 +142,12 @@ import org.vmmagic.pragma.*;
   @Inline
   public void collectionPhase(short phaseId) {
     if (traceFullHeap()) {
+    	Log.writeln("Coming intp Mv4 cp");
       if (phaseId == PREPARE) {
         super.collectionPhase(phaseId);
-        matureSpace.prepare(false);
+//        hi = !hi; // flip the semi-spaces
+        survivorSpace.prepare(true);
+        oldGenSpace.prepare(false);
         matureTrace.prepare();
         return;
       }
@@ -132,25 +156,28 @@ import org.vmmagic.pragma.*;
         return;
       }
       if (phaseId == RELEASE) {
+      	Log.writeln("MV4 CP Release");
         matureTrace.release();
+        survivorSpace.release();
+//        switchNurseryZeroingApproach(survivorSpace);
         super.collectionPhase(phaseId);
         return;
       }
     }
     super.collectionPhase(phaseId);
   }
-
   
   @Override
   public final boolean collectionRequired(boolean spaceFull, Space space) {
   	
   	
-  	Log.writeln("Collection required for Mementov3");
+  	Log.writeln("Collection required for Mementov4");
   	Log.write("Memory usage: ");
   	nurserySpace.printUsageMB();
   	
   	return super.collectionRequired(spaceFull, space);
   }
+
   /*****************************************************************************
    *
    * Accounting
@@ -163,7 +190,7 @@ import org.vmmagic.pragma.*;
   @Override
   @Inline
   public int getPagesUsed() {
-    return toSpace().reservedPages() + super.getPagesUsed();
+    return fromSpace().reservedPages() + super.getPagesUsed();
   }
 
   /**
@@ -175,12 +202,12 @@ import org.vmmagic.pragma.*;
   public final int getCollectionReserve() {
     // we must account for the number of pages required for copying,
     // which equals the number of semi-space pages reserved
-    return toSpace().reservedPages() + super.getCollectionReserve();
+    return fromSpace().reservedPages() + super.getCollectionReserve();
   }
 
   @Override
   public int getMaturePhysicalPagesAvail() {
-    return toSpace().availablePhysicalPages() >> 1;
+    return fromSpace().availablePhysicalPages() >> 1;
   }
 
   /**************************************************************************
@@ -193,13 +220,13 @@ import org.vmmagic.pragma.*;
   @Override
   @Inline
   public Space activeMatureSpace() {
-    return toSpace();
+    return survivorSpace;
   }
 
   @Override
   @Interruptible
   protected void registerSpecializedMethods() {
-    TransitiveClosure.registerSpecializedScan(SCAN_MATURE, MementoV3MatureTraceLocal.class);
+    TransitiveClosure.registerSpecializedScan(SCAN_MATURE, MementoV4MatureTraceLocal.class);
     super.registerSpecializedMethods();
   }
 }

@@ -68,6 +68,10 @@ public class PlanSpecificConfig {
 	    .addExpectedSpaces("nursery", "ss0"),
 	    "MementoV3");
     register(
+  	    new PlanSpecific("org.mmtk.plan.mementov4.MementoV4")
+  	    .addExpectedSpaces("nursery", "survivor", "oldgen"),
+  	    "MementoV4");
+    register(
   	    new PlanSpecific("org.mmtk.plan.mementoV2.MementoV2")
   	    .addExpectedSpaces("eden1", "eden2", "survivor"),
   	    "MementoV2");

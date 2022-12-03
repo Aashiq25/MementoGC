@@ -10,7 +10,7 @@
  *  See the COPYRIGHT.txt file distributed with this work for information
  *  regarding copyright ownership.
  */
-package org.mmtk.plan.mementov3;
+package org.mmtk.plan.mementov4;
 
 import org.mmtk.plan.generational.Gen;
 import org.mmtk.plan.generational.GenCollector;
@@ -19,6 +19,7 @@ import org.mmtk.plan.TraceLocal;
 import org.mmtk.policy.CopyLocal;
 import org.mmtk.utility.ForwardingWord;
 import org.mmtk.utility.HeaderByte;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.vm.VM;
 
@@ -35,16 +36,16 @@ import org.vmmagic.pragma.*;
  * allocation into the mature space), and the mature space per-collector thread
  * collection time semantics are defined.<p>
  *
- * @see MementoV3 for a description of the <code>GenCopy</code> algorithm.
+ * @see MementoV4 for a description of the <code>GenCopy</code> algorithm.
  *
- * @see MementoV3
- * @see MementoV3Mutator
+ * @see MementoV4
+ * @see MementoV4Mutator
  * @see GenCollector
  * @see org.mmtk.plan.StopTheWorldCollector
  * @see org.mmtk.plan.CollectorContext
  */
 @Uninterruptible
-public class MementoV3Collector extends GenCollector {
+public class MementoV4Collector extends GenCollector {
 
   /******************************************************************
    * Instance fields
@@ -54,7 +55,7 @@ public class MementoV3Collector extends GenCollector {
   private final CopyLocal mature;
 
   /** The trace object for full-heap collections */
-  private final MementoV3MatureTraceLocal matureTrace;
+  private final MementoV4MatureTraceLocal matureTrace;
 
   /****************************************************************************
    *
@@ -64,9 +65,10 @@ public class MementoV3Collector extends GenCollector {
   /**
    * Constructor
    */
-  public MementoV3Collector() {
-    mature = new CopyLocal(MementoV3.toSpace());
-    matureTrace = new MementoV3MatureTraceLocal(global().matureTrace, this);
+  public MementoV4Collector() {
+    mature = new CopyLocal(MementoV4.survivorSpace);
+//    oldGen = new CopyLocal(MementoV4.oldGenSpace);
+    matureTrace = new MementoV4MatureTraceLocal(global().matureTrace, this);
   }
 
   /****************************************************************************
@@ -81,14 +83,17 @@ public class MementoV3Collector extends GenCollector {
   @Inline
   public Address allocCopy(ObjectReference original, int bytes,
       int align, int offset, int allocator) {
+  	Log.write("Alloc Copy Collector: ");
+  	Log.write(allocator);
+  	Log.writeln();
     if (allocator == Plan.ALLOC_LOS) {
       if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(Allocator.getMaximumAlignedSize(bytes, align) > Plan.MAX_NON_LOS_COPY_BYTES);
       return los.alloc(bytes, align, offset);
     } else {
       if (VM.VERIFY_ASSERTIONS) {
         VM.assertions._assert(bytes <= Plan.MAX_NON_LOS_COPY_BYTES);
-        VM.assertions._assert(allocator == MementoV3.ALLOC_MATURE_MINORGC ||
-            allocator == MementoV3.ALLOC_MATURE_MAJORGC);
+        VM.assertions._assert(allocator == MementoV4.ALLOC_MATURE_MINORGC ||
+            allocator == MementoV4.ALLOC_MATURE_MAJORGC);
       }
       return mature.alloc(bytes, align, offset);
     }
@@ -106,8 +111,8 @@ public class MementoV3Collector extends GenCollector {
     ForwardingWord.clearForwardingBits(object);
     if (allocator == Plan.ALLOC_LOS)
       Plan.loSpace.initializeHeader(object, false);
-    else if (MementoV3.IGNORE_REMSETS)
-      MementoV3.immortalSpace.traceObject(getCurrentTrace(), object); // FIXME this does not look right
+    else if (MementoV4.IGNORE_REMSETS)
+      MementoV4.immortalSpace.traceObject(getCurrentTrace(), object); // FIXME this does not look right
     if (Gen.USE_OBJECT_BARRIER)
       HeaderByte.markAsUnlogged(object);
   }
@@ -123,17 +128,37 @@ public class MementoV3Collector extends GenCollector {
    */
   @Override
   public void collectionPhase(short phaseId, boolean primary) {
+  	Log.write("Collection phase traceFullHeap: ");
+  	Log.write(global().traceFullHeap());
+  	Log.write(" gcFullHeap: ");
+  	Log.writeln(global().gcFullHeap);
+  	mature.show();
+  	Log.write("Space: ");
+  	Log.writeln(mature.getSpace().getName());
+  	mature.getSpace().printUsageMB();
     if (global().traceFullHeap()) {
-      if (phaseId == MementoV3.PREPARE) {
+      if (phaseId == MementoV4.PREPARE) {
+      	Log.writeln("MC Prepare");
         super.collectionPhase(phaseId, primary);
-//        if (global().gcFullHeap) mature.rebind(MementoV3.toSpace());
+        if (global().gcFullHeap) {
+        	mature.rebind(MementoV4.oldGenSpace);
+        }
+//        else {
+//        	mature.rebind(MementoV4.survivorSpace);
+//        }
       }
-      if (phaseId == MementoV3.CLOSURE) {
+      if (phaseId == MementoV4.CLOSURE) {
+      	Log.writeln("MC Closure");
         matureTrace.completeTrace();
+        Log.writeln("Closure complete");
         return;
       }
-      if (phaseId == MementoV3.RELEASE) {
+      if (phaseId == MementoV4.RELEASE) {
+      	Log.writeln("MC Release");
         matureTrace.release();
+//        Log.write("Release mature trace: ");
+//        Log.writeln(matureTrace.getClass().getSimpleName());
+        mature.rebind(MementoV4.survivorSpace);
         super.collectionPhase(phaseId, primary);
         return;
       }
@@ -147,8 +172,8 @@ public class MementoV3Collector extends GenCollector {
    */
 
   /** @return The active global plan as a <code>GenCopy</code> instance. */
-  private static MementoV3 global() {
-    return (MementoV3) VM.activePlan.global();
+  private static MementoV4 global() {
+    return (MementoV4) VM.activePlan.global();
   }
 
   /** Show the status of the mature allocator. */

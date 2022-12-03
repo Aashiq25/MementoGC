@@ -10,7 +10,7 @@
  *  See the COPYRIGHT.txt file distributed with this work for information
  *  regarding copyright ownership.
  */
-package org.mmtk.plan.mementov3;
+package org.mmtk.plan.mementov4;
 
 import org.mmtk.plan.generational.Gen;
 import org.mmtk.plan.generational.GenCollector;
@@ -29,18 +29,18 @@ import org.vmmagic.unboxed.*;
  * collector.
  */
 @Uninterruptible
-public final class MementoV3MatureTraceLocal extends GenMatureTraceLocal {
+public final class MementoV4MatureTraceLocal extends GenMatureTraceLocal {
 
   /**
    * @param global the global trace class to use
    * @param plan the state of the generational collector
    */
-  public MementoV3MatureTraceLocal(Trace global, GenCollector plan) {
+  public MementoV4MatureTraceLocal(Trace global, GenCollector plan) {
     super(global, plan);
   }
 
-  private static MementoV3 global() {
-    return (MementoV3) VM.activePlan.global();
+  private static MementoV4 global() {
+    return (MementoV4) VM.activePlan.global();
   }
 
   /**
@@ -58,16 +58,21 @@ public final class MementoV3MatureTraceLocal extends GenMatureTraceLocal {
     if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(global().traceFullHeap());
     if (object.isNull()) return object;
 
-    if (Space.isInSpace(MementoV3.MS, object))
-      return MementoV3.matureSpace.traceObject(this, object, Gen.ALLOC_MATURE_MINORGC);
+    if (Space.isInSpace(MementoV4.SURVIVOR, object))
+      return MementoV4.survivorSpace.traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
+    if (Space.isInSpace(MementoV4.OLDGEN, object))
+      return MementoV4.oldGenSpace.traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
     return super.traceObject(object);
   }
 
   @Override
   public boolean isLive(ObjectReference object) {
     if (object.isNull()) return false;
-    if (Space.isInSpace(MementoV3.MS, object))
-      return MementoV3.matureSpace.isLive(object);
+    // ! Logic change done here
+    if (Space.isInSpace(MementoV4.SURVIVOR, object))
+      return MementoV4.survivorSpace.isLive(object);
+    if (Space.isInSpace(MementoV4.OLDGEN, object))
+      return true;//MementoV4.oldGenSpace.isLive(object);
     return super.isLive(object);
   }
 
@@ -82,8 +87,11 @@ public final class MementoV3MatureTraceLocal extends GenMatureTraceLocal {
    */
   @Override
   public boolean willNotMoveInCurrentCollection(ObjectReference object) {
-    if (Space.isInSpace(MementoV3.toSpaceDesc(), object)) {
+    if (Space.isInSpace(MementoV4.OLDGEN, object)) {
       return true;
+    }
+    if (Space.isInSpace(MementoV4.SURVIVOR, object)) {
+      return false;
     }
     return super.willNotMoveInCurrentCollection(object);
   }

@@ -14,6 +14,7 @@ package org.mmtk.plan.generational;
 
 import org.mmtk.plan.*;
 import org.mmtk.policy.LargeObjectLocal;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.deque.*;
 
 import org.mmtk.vm.VM;
@@ -84,7 +85,9 @@ import org.vmmagic.pragma.*;
   @Override
   @NoInline
   public void collectionPhase(short phaseId, boolean primary) {
-
+  	Log.writeln("GC CP");
+  	Log.write("PhaseID: ");
+  	Log.writeln(phaseId);
     if (phaseId == Gen.PREPARE) {
       los.prepare(true);
       global().arrayRemsetPool.prepareNonBlocking();
