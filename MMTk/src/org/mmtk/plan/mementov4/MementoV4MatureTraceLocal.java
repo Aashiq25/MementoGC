@@ -61,7 +61,7 @@ public final class MementoV4MatureTraceLocal extends GenMatureTraceLocal {
     if (Space.isInSpace(MementoV4.SURVIVOR, object))
       return MementoV4.survivorSpace.traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
     if (Space.isInSpace(MementoV4.OLDGEN, object))
-      return MementoV4.oldGenSpace.traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
+      return MementoV4.oldGenSpace.traceObject(this, object);
     return super.traceObject(object);
   }
 
@@ -72,7 +72,7 @@ public final class MementoV4MatureTraceLocal extends GenMatureTraceLocal {
     if (Space.isInSpace(MementoV4.SURVIVOR, object))
       return MementoV4.survivorSpace.isLive(object);
     if (Space.isInSpace(MementoV4.OLDGEN, object))
-      return true;//MementoV4.oldGenSpace.isLive(object);
+      return MementoV4.oldGenSpace.isLive(object);
     return super.isLive(object);
   }
 

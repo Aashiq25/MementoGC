@@ -13,6 +13,7 @@
 package org.mmtk.plan.mementov4;
 
 import org.mmtk.policy.CopySpace;
+import org.mmtk.policy.MarkSweepSpace;
 import org.mmtk.policy.Space;
 import org.mmtk.plan.generational.*;
 import org.mmtk.plan.Trace;
@@ -70,7 +71,7 @@ import org.vmmagic.pragma.*;
    * The low half of the copying mature space.  We allocate into this space
    * when <code>hi</code> is <code>false</code>.
    */
-  static CopySpace survivorSpace = new CopySpace("survivor", false, VMRequest.highFraction(0.1f));
+  static CopySpace survivorSpace = new CopySpace("survivor", false, VMRequest.fixedSize(20));
   static final int SURVIVOR = survivorSpace.getDescriptor();
   
 
@@ -78,7 +79,7 @@ import org.vmmagic.pragma.*;
    * The high half of the copying mature space. We allocate into this space
    * when <code>hi</code> is <code>true</code>.
    */
-  static CopySpace oldGenSpace = new CopySpace("oldgen", false, VMRequest.highFraction(0.2f));
+  static MarkSweepSpace oldGenSpace = new MarkSweepSpace("oldgen", VMRequest.fixedSize(50));
   static final int OLDGEN = oldGenSpace.getDescriptor();
 
 
@@ -101,19 +102,6 @@ import org.vmmagic.pragma.*;
     matureTrace = new Trace(metaDataSpace);
   }
 
-  /**
-   * @return The semispace we are currently allocating into
-   */
-  static CopySpace toSpace() {
-    return oldGenSpace;
-  }
-
-  /**
-   * @return Space descriptor for to-space.
-   */
-  static int toSpaceDesc() {
-    return OLDGEN;
-  }
 
   /**
    * @return The semispace we are currently copying from
@@ -141,13 +129,15 @@ import org.vmmagic.pragma.*;
   @Override
   @Inline
   public void collectionPhase(short phaseId) {
+  	Log.write("[MV4 P]:[CollectionPhase]: PhaseId: ");
+  	Log.writeln(phaseId);
     if (traceFullHeap()) {
-    	Log.writeln("Coming intp Mv4 cp");
       if (phaseId == PREPARE) {
         super.collectionPhase(phaseId);
-//        hi = !hi; // flip the semi-spaces
         survivorSpace.prepare(true);
-        oldGenSpace.prepare(false);
+//        if (gcFullHeap) {
+//        	oldGenSpace.prepare(gcFullHeap);
+//        } 
         matureTrace.prepare();
         return;
       }
@@ -156,11 +146,15 @@ import org.vmmagic.pragma.*;
         return;
       }
       if (phaseId == RELEASE) {
-      	Log.writeln("MV4 CP Release");
+      	Log.writeln("MV4 P Release");
+      	survivorSpace.printUsageMB();
         matureTrace.release();
+//        if()
         survivorSpace.release();
-//        switchNurseryZeroingApproach(survivorSpace);
+        survivorSpace.printUsageMB();
         super.collectionPhase(phaseId);
+        Log.writeln("After M4 release anna");
+        survivorSpace.printUsageMB();
         return;
       }
     }
@@ -169,12 +163,13 @@ import org.vmmagic.pragma.*;
   
   @Override
   public final boolean collectionRequired(boolean spaceFull, Space space) {
-  	
-  	
-  	Log.writeln("Collection required for Mementov4");
-  	Log.write("Memory usage: ");
-  	nurserySpace.printUsageMB();
-  	
+  	if(survivorSpace.reservedPages()>10) {
+  		nextGCFullHeap = true;
+  		return true;
+  	}
+  	if (oldGenSpace.reservedPages() > 30) {
+  		emergencyCollection = true;
+  	}
   	return super.collectionRequired(spaceFull, space);
   }
 
@@ -190,7 +185,7 @@ import org.vmmagic.pragma.*;
   @Override
   @Inline
   public int getPagesUsed() {
-    return fromSpace().reservedPages() + super.getPagesUsed();
+    return survivorSpace.reservedPages() + super.getPagesUsed();
   }
 
   /**
@@ -202,12 +197,12 @@ import org.vmmagic.pragma.*;
   public final int getCollectionReserve() {
     // we must account for the number of pages required for copying,
     // which equals the number of semi-space pages reserved
-    return fromSpace().reservedPages() + super.getCollectionReserve();
+    return survivorSpace.reservedPages() + super.getCollectionReserve();
   }
 
   @Override
   public int getMaturePhysicalPagesAvail() {
-    return fromSpace().availablePhysicalPages() >> 1;
+    return survivorSpace.availablePhysicalPages() >> 1;
   }
 
   /**************************************************************************

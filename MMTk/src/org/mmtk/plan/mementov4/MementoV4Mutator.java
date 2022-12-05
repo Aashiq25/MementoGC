@@ -14,6 +14,7 @@ package org.mmtk.plan.mementov4;
 
 import org.mmtk.plan.generational.GenMutator;
 import org.mmtk.policy.CopyLocal;
+import org.mmtk.policy.MarkSweepLocal;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.Log;
 import org.mmtk.utility.alloc.Allocator;
@@ -53,6 +54,8 @@ public class MementoV4Mutator extends GenMutator {
    * the collector)
    */
   private final CopyLocal mature;
+  
+  private final MarkSweepLocal oldGen;
 
   /****************************************************************************
    *
@@ -64,6 +67,7 @@ public class MementoV4Mutator extends GenMutator {
    */
   public MementoV4Mutator() {
     mature = new CopyLocal();
+    oldGen = new MarkSweepLocal(MementoV4.oldGenSpace);
   }
 
   /**
@@ -105,8 +109,10 @@ public class MementoV4Mutator extends GenMutator {
 
   @Override
   public final Allocator getAllocatorFromSpace(Space space) {
-  	Log.writeln("AM I used? : getAllocatorFromSpace");
-    if (space == MementoV4.survivorSpace || space == MementoV4.oldGenSpace) return mature;
+  	Log.write("AM I used? : getAllocatorFromSpace Space name: ");
+  	Log.writeln(space.getName());
+    if (space == MementoV4.survivorSpace) return mature;
+    if (space == MementoV4.oldGenSpace) return oldGen;
     return super.getAllocatorFromSpace(space);
   }
 
@@ -121,15 +127,23 @@ public class MementoV4Mutator extends GenMutator {
    */
   @Override
   public void collectionPhase(short phaseId, boolean primary) {
-    if (global().traceFullHeap()) {
-      if (phaseId == MementoV4.RELEASE) {
-        super.collectionPhase(phaseId, primary);
-        if (global().gcFullHeap) { 
-        	Log.writeln("CP Mut OG");
-        	mature.rebind(MementoV4.survivorSpace);}
-        return;
-      }
-    }
+  	Log.write("[MC4] Collection phase phaseId: ");
+  	Log.writeln(phaseId);
+//    if (global().traceFullHeap()) {
+//    		if (phaseId == MementoV4.PREPARE) {
+//    			super.collectionPhase(phaseId, primary);
+//    			if(global().gcFullHeap) {
+//    				oldGen.prepare();
+//    			}
+//    		}
+//      if (phaseId == MementoV4.RELEASE) {
+//        super.collectionPhase(phaseId, primary);
+		/*
+		 * //// if (global().gcFullHeap) { //// Log.writeln("CP Mut OG"); ////
+		 * oldGen.release(); //// }
+		 *///        return;
+//      }
+//    }
 
     super.collectionPhase(phaseId, primary);
   }

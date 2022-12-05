@@ -100,7 +100,7 @@ public abstract class Gen extends StopTheWorld {
 
   /* The nursery space is where all new objects are allocated by default */
   private static final VMRequest vmRequest = USE_DISCONTIGUOUS_NURSERY ? VMRequest.discontiguous() : VMRequest.highFraction(NURSERY_VM_FRACTION);
-  public static final CopySpace nurserySpace = new CopySpace("nursery", false, vmRequest);
+  public static final CopySpace nurserySpace = new CopySpace("nursery", false, VMRequest.fixedSize(5));
 
   public static final int NURSERY = nurserySpace.getDescriptor();
   private static final Address NURSERY_START = nurserySpace.getStart();
@@ -228,17 +228,18 @@ public abstract class Gen extends StopTheWorld {
 
     /* periodically recalculate nursery pretenure threshold */
     Plan.pretenureThreshold = (int) (pagesToBytes(availableNurseryPages).toInt() * Options.pretenureThresholdFraction.getValue());
-    if (availableNurseryPages <= 0) {
-    	Log.writeln("Available nursery space less than 0 Collection triggered.");
+    if (availableNurseryPages <= 0 || nurserySpace.reservedPages() > 10) {
+    	Log.writeln("[Gen]: Available nursery space less than 0 Collection triggered.");
       return true;
     }
 
     if (virtualMemoryExhausted()) {
-    	Log.writeln("Virtual memory exhausted.");
+    	Log.writeln("[Gen]: Virtual memory exhausted. Collection Required!");
       return true;
     }
 
     if (spaceFull && space != nurserySpace) {
+    	Log.writeln("[Gen]: Space Full and Space Not Nursery. Collection Required!");
       nextGCFullHeap = true;
     }
 

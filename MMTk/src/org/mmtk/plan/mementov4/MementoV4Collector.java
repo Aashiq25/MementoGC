@@ -17,6 +17,8 @@ import org.mmtk.plan.generational.GenCollector;
 import org.mmtk.plan.Plan;
 import org.mmtk.plan.TraceLocal;
 import org.mmtk.policy.CopyLocal;
+import org.mmtk.policy.MarkSweepLocal;
+import org.mmtk.policy.Space;
 import org.mmtk.utility.ForwardingWord;
 import org.mmtk.utility.HeaderByte;
 import org.mmtk.utility.Log;
@@ -53,6 +55,8 @@ public class MementoV4Collector extends GenCollector {
 
   /** The allocator for the mature space */
   private final CopyLocal mature;
+  
+  private final MarkSweepLocal oldGen;
 
   /** The trace object for full-heap collections */
   private final MementoV4MatureTraceLocal matureTrace;
@@ -67,7 +71,7 @@ public class MementoV4Collector extends GenCollector {
    */
   public MementoV4Collector() {
     mature = new CopyLocal(MementoV4.survivorSpace);
-//    oldGen = new CopyLocal(MementoV4.oldGenSpace);
+    oldGen = new MarkSweepLocal(MementoV4.oldGenSpace);
     matureTrace = new MementoV4MatureTraceLocal(global().matureTrace, this);
   }
 
@@ -83,9 +87,6 @@ public class MementoV4Collector extends GenCollector {
   @Inline
   public Address allocCopy(ObjectReference original, int bytes,
       int align, int offset, int allocator) {
-  	Log.write("Alloc Copy Collector: ");
-  	Log.write(allocator);
-  	Log.writeln();
     if (allocator == Plan.ALLOC_LOS) {
       if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(Allocator.getMaximumAlignedSize(bytes, align) > Plan.MAX_NON_LOS_COPY_BYTES);
       return los.alloc(bytes, align, offset);
@@ -94,6 +95,12 @@ public class MementoV4Collector extends GenCollector {
         VM.assertions._assert(bytes <= Plan.MAX_NON_LOS_COPY_BYTES);
         VM.assertions._assert(allocator == MementoV4.ALLOC_MATURE_MINORGC ||
             allocator == MementoV4.ALLOC_MATURE_MAJORGC);
+      }
+      if (allocator == MementoV4.ALLOC_MATURE_MAJORGC) {
+      	MementoV4.oldGenSpace.printUsageMB();
+      	Log.write("Old Gen reserved spaces: ");
+      	Log.writeln(MementoV4.oldGenSpace.reservedPages());
+      	return oldGen.alloc(bytes, align, offset);
       }
       return mature.alloc(bytes, align, offset);
     }
@@ -111,6 +118,12 @@ public class MementoV4Collector extends GenCollector {
     ForwardingWord.clearForwardingBits(object);
     if (allocator == Plan.ALLOC_LOS)
       Plan.loSpace.initializeHeader(object, false);
+    else if (Space.isInSpace(MementoV4.OLDGEN, object)) {
+    	MementoV4.oldGenSpace.postCopy(object, allocator == MementoV4.ALLOC_MATURE_MAJORGC);
+    }
+//    else if (allocator == MementoV4.ALLOC_MATURE_MAJORGC) {
+//    else MementoV4.oldGenSpace.postCopy(object, allocator == MementoV4.ALLOC_MATURE_MAJORGC);
+//    }
     else if (MementoV4.IGNORE_REMSETS)
       MementoV4.immortalSpace.traceObject(getCurrentTrace(), object); // FIXME this does not look right
     if (Gen.USE_OBJECT_BARRIER)
@@ -128,41 +141,34 @@ public class MementoV4Collector extends GenCollector {
    */
   @Override
   public void collectionPhase(short phaseId, boolean primary) {
-  	Log.write("Collection phase traceFullHeap: ");
-  	Log.write(global().traceFullHeap());
-  	Log.write(" gcFullHeap: ");
-  	Log.writeln(global().gcFullHeap);
-  	mature.show();
-  	Log.write("Space: ");
-  	Log.writeln(mature.getSpace().getName());
+  	Log.write("[MV4 C]:[CollectionPhase]: PhaseId:");
+  	Log.writeln(phaseId);
+  	Log.writeln("Space Usage");
   	mature.getSpace().printUsageMB();
     if (global().traceFullHeap()) {
       if (phaseId == MementoV4.PREPARE) {
-      	Log.writeln("MC Prepare");
+      	Log.writeln("MC Prepare Start");
+      	matureTrace.prepare();
+      	oldGen.prepare();
         super.collectionPhase(phaseId, primary);
-        if (global().gcFullHeap) {
-        	mature.rebind(MementoV4.oldGenSpace);
-        }
-//        else {
-//        	mature.rebind(MementoV4.survivorSpace);
-//        }
+        Log.writeln("MC Prepare Complete");
       }
       if (phaseId == MementoV4.CLOSURE) {
-      	Log.writeln("MC Closure");
+      	Log.writeln("MC Closure Start");
         matureTrace.completeTrace();
         Log.writeln("Closure complete");
         return;
       }
       if (phaseId == MementoV4.RELEASE) {
-      	Log.writeln("MC Release");
+      	Log.writeln("MC Release Start");
         matureTrace.release();
-//        Log.write("Release mature trace: ");
-//        Log.writeln(matureTrace.getClass().getSimpleName());
-        mature.rebind(MementoV4.survivorSpace);
         super.collectionPhase(phaseId, primary);
+        Log.writeln("MC Release Complete");
+        mature.getSpace().printUsageMB();
         return;
       }
     }
+    
     super.collectionPhase(phaseId, primary);
   }
 
