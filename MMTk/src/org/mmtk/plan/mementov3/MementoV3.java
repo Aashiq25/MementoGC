@@ -94,19 +94,7 @@ import org.vmmagic.pragma.*;
     matureTrace = new Trace(metaDataSpace);
   }
 
-  /**
-   * @return The semispace we are currently allocating into
-   */
-  static CopySpace toSpace() {
-    return matureSpace;
-  }
 
-  /**
-   * @return Space descriptor for to-space.
-   */
-  static int toSpaceDesc() {
-    return MS;
-  }
 
 
   /****************************************************************************
@@ -163,7 +151,7 @@ import org.vmmagic.pragma.*;
   @Override
   @Inline
   public int getPagesUsed() {
-    return toSpace().reservedPages() + super.getPagesUsed();
+    return matureSpace.reservedPages() + super.getPagesUsed();
   }
 
   /**
@@ -175,12 +163,12 @@ import org.vmmagic.pragma.*;
   public final int getCollectionReserve() {
     // we must account for the number of pages required for copying,
     // which equals the number of semi-space pages reserved
-    return toSpace().reservedPages() + super.getCollectionReserve();
+    return matureSpace.reservedPages() + super.getCollectionReserve();
   }
 
   @Override
   public int getMaturePhysicalPagesAvail() {
-    return toSpace().availablePhysicalPages() >> 1;
+    return matureSpace.availablePhysicalPages() >> 1;
   }
 
   /**************************************************************************
@@ -193,7 +181,7 @@ import org.vmmagic.pragma.*;
   @Override
   @Inline
   public Space activeMatureSpace() {
-    return toSpace();
+    return matureSpace;
   }
 
   @Override

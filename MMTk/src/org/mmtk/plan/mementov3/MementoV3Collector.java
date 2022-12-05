@@ -65,7 +65,7 @@ public class MementoV3Collector extends GenCollector {
    * Constructor
    */
   public MementoV3Collector() {
-    mature = new CopyLocal(MementoV3.toSpace());
+    mature = new CopyLocal(MementoV3.matureSpace);
     matureTrace = new MementoV3MatureTraceLocal(global().matureTrace, this);
   }
 

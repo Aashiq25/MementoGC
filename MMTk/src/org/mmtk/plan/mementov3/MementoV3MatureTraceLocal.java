@@ -59,7 +59,7 @@ public final class MementoV3MatureTraceLocal extends GenMatureTraceLocal {
     if (object.isNull()) return object;
 
     if (Space.isInSpace(MementoV3.MS, object))
-      return MementoV3.matureSpace.traceObject(this, object, Gen.ALLOC_MATURE_MINORGC);
+      return MementoV3.matureSpace.traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
     return super.traceObject(object);
   }
 
@@ -82,7 +82,7 @@ public final class MementoV3MatureTraceLocal extends GenMatureTraceLocal {
    */
   @Override
   public boolean willNotMoveInCurrentCollection(ObjectReference object) {
-    if (Space.isInSpace(MementoV3.toSpaceDesc(), object)) {
+    if (Space.isInSpace(MementoV3.MS, object)) {
       return true;
     }
     return super.willNotMoveInCurrentCollection(object);

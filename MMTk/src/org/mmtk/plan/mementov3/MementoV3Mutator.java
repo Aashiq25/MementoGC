@@ -72,7 +72,7 @@ public class MementoV3Mutator extends GenMutator {
   @Override
   public void initMutator(int id) {
     super.initMutator(id);
-    mature.rebind(MementoV3.toSpace());
+    mature.rebind(MementoV3.matureSpace);
   }
 
   /****************************************************************************
@@ -121,7 +121,7 @@ public class MementoV3Mutator extends GenMutator {
     if (global().traceFullHeap()) {
       if (phaseId == MementoV3.RELEASE) {
         super.collectionPhase(phaseId, primary);
-        if (global().gcFullHeap) mature.rebind(MementoV3.toSpace());
+//        if (global().gcFullHeap) mature.rebind(MementoV3.matureSpace);
         return;
       }
     }
