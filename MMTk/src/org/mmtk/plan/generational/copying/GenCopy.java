@@ -108,14 +108,14 @@ import org.vmmagic.pragma.*;
   /**
    * @return The semispace we are currently allocating into
    */
-  static CopySpace toSpace() {
+  public static CopySpace toSpace() {
     return hi ? matureSpace1 : matureSpace0;
   }
 
   /**
    * @return Space descriptor for to-space.
    */
-  static int toSpaceDesc() {
+  public static int toSpaceDesc() {
     return hi ? MS1 : MS0;
   }
 
@@ -123,14 +123,14 @@ import org.vmmagic.pragma.*;
    * @return The semispace we are currently copying from
    * (or copied from at last major GC)
    */
-  static CopySpace fromSpace() {
+  public static CopySpace fromSpace() {
     return hi ? matureSpace0 : matureSpace1;
   }
 
   /**
    * @return Space descriptor for from-space
    */
-  static int fromSpaceDesc() {
+  public static int fromSpaceDesc() {
     return hi ? MS0 : MS1;
   }
 

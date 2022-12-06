@@ -29,7 +29,7 @@ import org.vmmagic.unboxed.*;
  * collector.
  */
 @Uninterruptible
-public final class GenCopyMatureTraceLocal extends GenMatureTraceLocal {
+public class GenCopyMatureTraceLocal extends GenMatureTraceLocal {
 
   /**
    * @param global the global trace class to use
@@ -58,10 +58,8 @@ public final class GenCopyMatureTraceLocal extends GenMatureTraceLocal {
     if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(global().traceFullHeap());
     if (object.isNull()) return object;
 
-    if (Space.isInSpace(GenCopy.MS0, object))
-      return GenCopy.matureSpace0.traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
-    if (Space.isInSpace(GenCopy.MS1, object))
-      return GenCopy.matureSpace1.traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
+    if (Space.isInSpace(GenCopy.fromSpaceDesc(), object))
+      return GenCopy.fromSpace().traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
     return super.traceObject(object);
   }
 
@@ -87,7 +85,7 @@ public final class GenCopyMatureTraceLocal extends GenMatureTraceLocal {
   @Override
   public boolean willNotMoveInCurrentCollection(ObjectReference object) {
     if (Space.isInSpace(GenCopy.toSpaceDesc(), object)) {
-      return true;
+      return false;
     }
     if (Space.isInSpace(GenCopy.fromSpaceDesc(), object)) {
       return false;
