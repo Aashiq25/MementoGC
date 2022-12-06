@@ -28,7 +28,7 @@ import org.vmmagic.unboxed.*;
  * collector.
  */
 @Uninterruptible
-public final class MementoV5TraceLocal extends GenMatureTraceLocal {
+public final class MementoV5TraceLocal extends GenCopyMatureTraceLocal {
 
   /**
    * @param global the global trace class to use
@@ -37,6 +37,7 @@ public final class MementoV5TraceLocal extends GenMatureTraceLocal {
   public MementoV5TraceLocal(int specializedScan, Trace global, GenCollector plan) {
     super(specializedScan, global, plan);
   }
+
 
   @Override
   @Inline

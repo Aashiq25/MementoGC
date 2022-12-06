@@ -39,6 +39,10 @@ public class GenCopyMatureTraceLocal extends GenMatureTraceLocal {
     super(global, plan);
   }
 
+  public GenCopyMatureTraceLocal(int specializedScan,Trace global, GenCollector plan) {
+    super(specializedScan, global, plan);
+  }
+
   private static GenCopy global() {
     return (GenCopy) VM.activePlan.global();
   }
