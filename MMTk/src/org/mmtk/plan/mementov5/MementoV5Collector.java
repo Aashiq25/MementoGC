@@ -61,7 +61,7 @@ public class MementoV5Collector extends GenCopyCollector {
    */
   public MementoV5Collector() {
     oldGen = new MarkSweepLocal(MementoV5.msSpace);
-    oldGenTrace = new MementoV5TraceLocal(global().oldGenTrace, this);
+    oldGenTrace = new MementoV5TraceLocal(MementoV5.SCAN_OLD_GEN, global().oldGenTrace, this);
   }
 
   /****************************************************************************
