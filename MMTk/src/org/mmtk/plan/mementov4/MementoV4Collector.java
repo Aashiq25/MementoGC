@@ -135,11 +135,15 @@ public class MementoV4Collector extends GenCollector {
    */
   @Override
   public void collectionPhase(short phaseId, boolean primary) {
+    Log.write("Memory usage during v4 Collector: ");
   	mature.getSpace().printUsageMB();
     if (global().traceFullHeap()) {
       if (phaseId == MementoV4.PREPARE) {
       	matureTrace.prepare();
-      	oldGen.prepare();
+
+        if (global().triggerOldGenSweep) {
+          oldGen.prepare();
+        }
         super.collectionPhase(phaseId, primary);
       }
       if (phaseId == MementoV4.CLOSURE) {
@@ -148,8 +152,11 @@ public class MementoV4Collector extends GenCollector {
       }
       if (phaseId == MementoV4.RELEASE) {
         matureTrace.release();
+        if (global().triggerOldGenSweep) {
+          oldGen.release();
+          global().triggerOldGenSweep = false;
+        }
         super.collectionPhase(phaseId, primary);
-        mature.getSpace().printUsageMB();
         return;
       }
     }

@@ -84,6 +84,9 @@ import org.vmmagic.pragma.*;
   static final int OLDGEN = oldGenSpace.getDescriptor();
 
 
+  public boolean triggerOldGenSweep = false;
+
+
   /****************************************************************************
    *
    * Instance fields
@@ -138,6 +141,10 @@ import org.vmmagic.pragma.*;
   
   @Override
   public final boolean collectionRequired(boolean spaceFull, Space space) {
+    if (getOldGenPhysicalPagesAvail() > 10) {
+      triggerOldGenSweep = true;
+      return true;
+    }
   	return super.collectionRequired(spaceFull, space);
   }
 
@@ -171,6 +178,10 @@ import org.vmmagic.pragma.*;
   @Override
   public int getMaturePhysicalPagesAvail() {
     return survivorSpace.availablePhysicalPages();
+  }
+
+  public int getOldGenPhysicalPagesAvail() {
+    return oldGenSpace.availablePhysicalPages();
   }
 
   /**************************************************************************
