@@ -60,6 +60,7 @@ public class MementoV5 extends GenCopy {
 
   public static final int ALLOC_OLD_GEN = StopTheWorld.ALLOCATORS + 4;
 
+  public static final int SCAN_OLD_GEN  = 2;
   /****************************************************************************
    *
    * Instance fields
@@ -140,7 +141,7 @@ public class MementoV5 extends GenCopy {
   @Override
   @Interruptible
   protected void registerSpecializedMethods() {
-    TransitiveClosure.registerSpecializedScan(SCAN_MATURE, MementoV5TraceLocal.class);
+    TransitiveClosure.registerSpecializedScan(SCAN_OLD_GEN, MementoV5TraceLocal.class);
     super.registerSpecializedMethods();
   }
 }
