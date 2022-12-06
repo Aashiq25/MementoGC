@@ -115,7 +115,6 @@ import org.vmmagic.pragma.*;
   @Override
   @Inline
   public void collectionPhase(short phaseId) {
-  	Log.writeln(phaseId);
     if (traceFullHeap()) {
       if (phaseId == PREPARE) {
         super.collectionPhase(phaseId);

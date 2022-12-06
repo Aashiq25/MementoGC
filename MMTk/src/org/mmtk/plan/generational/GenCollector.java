@@ -85,9 +85,6 @@ import org.vmmagic.pragma.*;
   @Override
   @NoInline
   public void collectionPhase(short phaseId, boolean primary) {
-  	Log.writeln("GC CP");
-  	Log.write("PhaseID: ");
-  	Log.writeln(phaseId);
     if (phaseId == Gen.PREPARE) {
       los.prepare(true);
       global().arrayRemsetPool.prepareNonBlocking();
