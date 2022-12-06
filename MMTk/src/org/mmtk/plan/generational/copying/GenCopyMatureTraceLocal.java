@@ -16,6 +16,7 @@ import org.mmtk.plan.generational.Gen;
 import org.mmtk.plan.generational.GenCollector;
 import org.mmtk.plan.generational.GenMatureTraceLocal;
 import org.mmtk.plan.Trace;
+import org.mmtk.plan.mementov5.MementoV5;
 import org.mmtk.policy.Space;
 
 import org.mmtk.vm.VM;
@@ -62,8 +63,11 @@ public class GenCopyMatureTraceLocal extends GenMatureTraceLocal {
     if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(global().traceFullHeap());
     if (object.isNull()) return object;
 
+    if (Space.isInSpace(GenCopy.toSpaceDesc(), object))
+      return GenCopy.toSpace().traceObject(this, object, MementoV5.ALLOC_MATURE_MAJORGC);
     if (Space.isInSpace(GenCopy.fromSpaceDesc(), object))
-      return GenCopy.fromSpace().traceObject(this, object, Gen.ALLOC_MATURE_MAJORGC);
+      return GenCopy.fromSpace().traceObject(this, object, MementoV5.ALLOC_OLD_GEN );
+
     return super.traceObject(object);
   }
 

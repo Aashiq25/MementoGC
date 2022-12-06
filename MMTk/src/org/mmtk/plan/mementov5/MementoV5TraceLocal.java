@@ -47,8 +47,6 @@ public final class MementoV5TraceLocal extends GenCopyMatureTraceLocal {
     if (Space.isInSpace(MementoV5.MS, object)) {
       return MementoV5.msSpace.traceObject(this, object);
     }
-    if (Space.isInSpace(GenCopy.toSpaceDesc(), object))
-      return MementoV5.toSpace().traceObject(this, object, MementoV5.ALLOC_OLD_GEN);
 
     return super.traceObject(object);
   }
