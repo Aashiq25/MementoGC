@@ -85,7 +85,7 @@ public class GenCopyMutator extends GenMutator {
    */
   @Override
   @Inline
-  public final Address alloc(int bytes, int align, int offset, int allocator, int site) {
+  public Address alloc(int bytes, int align, int offset, int allocator, int site) {
     if (allocator == GenCopy.ALLOC_MATURE) {
       return mature.alloc(bytes, align, offset);
     }
@@ -94,7 +94,7 @@ public class GenCopyMutator extends GenMutator {
 
   @Override
   @Inline
-  public final void postAlloc(ObjectReference object, ObjectReference typeRef,
+  public void postAlloc(ObjectReference object, ObjectReference typeRef,
       int bytes, int allocator) {
     // nothing to be done
     if (allocator == GenCopy.ALLOC_MATURE) return;
@@ -102,7 +102,7 @@ public class GenCopyMutator extends GenMutator {
   }
 
   @Override
-  public final Allocator getAllocatorFromSpace(Space space) {
+  public Allocator getAllocatorFromSpace(Space space) {
     if (space == GenCopy.matureSpace0 || space == GenCopy.matureSpace1) return mature;
     return super.getAllocatorFromSpace(space);
   }

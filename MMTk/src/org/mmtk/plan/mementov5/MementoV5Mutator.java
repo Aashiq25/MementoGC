@@ -111,7 +111,7 @@ public class MementoV5Mutator extends GenCopyMutator {
   @Override
   @NoInline
   public void collectionPhase(short phaseId, boolean primary) {
-    if (global().traceFullHeap()) {
+    if (global().traceOldGen()) {
       if (phaseId == MementoV5.PREPARE) {
         super.collectionPhase(phaseId, primary);
         if (global().gcFullHeap) mature.prepare();

@@ -101,7 +101,7 @@ public class GenCopyCollector extends GenCollector {
    */
   @Override
   @Inline
-  public final void postCopy(ObjectReference object, ObjectReference typeRef,
+  public void postCopy(ObjectReference object, ObjectReference typeRef,
       int bytes, int allocator) {
     ForwardingWord.clearForwardingBits(object);
     if (allocator == Plan.ALLOC_LOS)
@@ -157,7 +157,7 @@ public class GenCopyCollector extends GenCollector {
   }
 
   @Override
-  public final TraceLocal getFullHeapTrace() {
+  public TraceLocal getFullHeapTrace() {
     return matureTrace;
   }
 }
