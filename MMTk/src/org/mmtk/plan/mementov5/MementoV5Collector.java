@@ -28,13 +28,15 @@ import org.vmmagic.unboxed.*;
 
 /**
  * This class implements <i>per-collector thread</i> behavior and state for
- * the <code>GenMS</code> two-generational copying collector.<p>
+ * the <code>GenMS</code> two-generational copying collector.
+ * <p>
  *
  * Specifically, this class defines semantics specific to the collection of
  * the mature generation (<code>GenCollector</code> defines nursery semantics).
  * In particular the mature space allocator is defined (for collection-time
  * allocation into the mature space), and the mature space per-collector thread
- * collection time semantics are defined.<p>
+ * collection time semantics are defined.
+ * <p>
  *
  * @see MementoV5 for a description of the <code>GenMS</code> algorithm.
  *
@@ -74,13 +76,15 @@ public class MementoV5Collector extends GenCopyCollector {
   @Inline
   @Override
   public final Address allocCopy(ObjectReference original, int bytes,
-                                 int align, int offset, int allocator) {
+      int align, int offset, int allocator) {
     if (Stats.GATHER_MARK_CONS_STATS) {
-      if (Space.isInSpace(MementoV5.NURSERY, original)) MementoV5.nurseryMark.inc(bytes);
+      if (Space.isInSpace(MementoV5.NURSERY, original))
+        MementoV5.nurseryMark.inc(bytes);
     }
 
     if (allocator == Plan.ALLOC_LOS) {
-      if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(Allocator.getMaximumAlignedSize(bytes, align) > Plan.MAX_NON_LOS_COPY_BYTES);
+      if (VM.VERIFY_ASSERTIONS)
+        VM.assertions._assert(Allocator.getMaximumAlignedSize(bytes, align) > Plan.MAX_NON_LOS_COPY_BYTES);
       return los.alloc(bytes, align, offset);
     } else {
       if (VM.VERIFY_ASSERTIONS) {
@@ -88,14 +92,17 @@ public class MementoV5Collector extends GenCopyCollector {
         VM.assertions._assert(allocator == MementoV5.ALLOC_MATURE_MINORGC ||
             allocator == MementoV5.ALLOC_MATURE_MAJORGC || allocator == MementoV5.ALLOC_OLD_GEN);
       }
-      return oldGen.alloc(bytes, align, offset);
+      if (allocator == MementoV5.ALLOC_OLD_GEN) {
+        return oldGen.alloc(bytes, align, offset);
+      }
+      return super.allocCopy(original, bytes, align, offset, allocator);
     }
   }
 
   @Inline
   @Override
   public final void postCopy(ObjectReference object, ObjectReference typeRef,
-                             int bytes, int allocator) {
+      int bytes, int allocator) {
     if (allocator == Plan.ALLOC_LOS)
       Plan.loSpace.initializeHeader(object, false);
     else
@@ -115,12 +122,13 @@ public class MementoV5Collector extends GenCopyCollector {
   @Override
   @NoInline
   public void collectionPhase(short phaseId, boolean primary) {
-  	global().msSpace.printUsageMB();
+    global().msSpace.printUsageMB();
     if (global().traceOldGen()) {
       if (phaseId == MementoV5.PREPARE) {
         super.collectionPhase(phaseId, primary);
         oldGenTrace.prepare();
-        if (global().traceOldGen() && global().gcFullHeap) oldGen.prepare();
+        if (global().traceOldGen() && global().gcFullHeap)
+          oldGen.prepare();
         return;
       }
 
@@ -130,7 +138,7 @@ public class MementoV5Collector extends GenCopyCollector {
       }
 
       if (phaseId == MementoV5.RELEASE) {
-      	global().msSpace.printUsageMB();
+        global().msSpace.printUsageMB();
         oldGenTrace.release();
         if (global().traceOldGen() && global().gcFullHeap) {
           oldGen.release();
