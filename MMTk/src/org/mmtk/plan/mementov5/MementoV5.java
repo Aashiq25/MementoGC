@@ -19,6 +19,8 @@ import org.mmtk.plan.generational.copying.GenCopy;
 import org.mmtk.policy.MarkSweepSpace;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.heap.VMRequest;
+import org.mmtk.utility.options.Options;
+import org.mmtk.vm.VM;
 import org.vmmagic.pragma.*;
 import org.vmmagic.unboxed.*;
 
@@ -61,11 +63,17 @@ public class MementoV5 extends GenCopy {
   public static final int ALLOC_OLD_GEN = StopTheWorld.ALLOCATORS + 4;
 
   public static final int SCAN_OLD_GEN  = 2;
+  
   /****************************************************************************
    *
    * Instance fields
    */
-
+  
+  public MementoV5() {
+    super();
+    Options.noReferenceTypes.setDefaultValue(true);
+  }
+  
   /** The trace class for a full-heap collection */
   public final Trace oldGenTrace = new Trace(metaDataSpace);
 
@@ -80,6 +88,7 @@ public class MementoV5 extends GenCopy {
   @Inline
   @Override
   public final void collectionPhase(short phaseId) {
+  	msSpace.printUsageMB();
     if (traceOldGen()) {
       if (phaseId == PREPARE) {
         super.collectionPhase(phaseId);

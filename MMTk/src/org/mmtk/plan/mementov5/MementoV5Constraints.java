@@ -30,4 +30,9 @@ public class MementoV5Constraints extends GenCopyConstraints {
   public int maxNonLOSCopyBytes() {
     return MAX_FREELIST_OBJECT_BYTES;
   }
+  @Override
+  public int numSpecializedScans() {
+    return 3;
+  }
+
 }
