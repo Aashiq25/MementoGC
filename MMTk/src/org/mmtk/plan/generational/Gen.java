@@ -228,18 +228,15 @@ public abstract class Gen extends StopTheWorld {
 
     /* periodically recalculate nursery pretenure threshold */
     Plan.pretenureThreshold = (int) (pagesToBytes(availableNurseryPages).toInt() * Options.pretenureThresholdFraction.getValue());
-    if (availableNurseryPages <= 0 || nurserySpace.reservedPages() > 10) {
-    	Log.writeln("[Gen]: Available nursery space less than 0 Collection triggered.");
+    if (availableNurseryPages <= 0) {
       return true;
     }
 
     if (virtualMemoryExhausted()) {
-    	Log.writeln("[Gen]: Virtual memory exhausted. Collection Required!");
       return true;
     }
 
     if (spaceFull && space != nurserySpace) {
-    	Log.writeln("[Gen]: Space Full and Space Not Nursery. Collection Required!");
       nextGCFullHeap = true;
     }
 

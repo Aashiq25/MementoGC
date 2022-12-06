@@ -20,6 +20,7 @@ import org.mmtk.plan.Trace;
 import org.mmtk.plan.TransitiveClosure;
 import org.mmtk.utility.Log;
 import org.mmtk.utility.heap.VMRequest;
+import org.mmtk.utility.options.Options;
 import org.mmtk.vm.VM;
 
 import org.vmmagic.pragma.*;
@@ -98,24 +99,9 @@ import org.vmmagic.pragma.*;
    */
   public MementoV4() {
     super();
+    Options.noReferenceTypes.setDefaultValue(true);
     if (VM.VERIFY_ASSERTIONS) VM.assertions._assert(!IGNORE_REMSETS); // Not supported for GenCopy
     matureTrace = new Trace(metaDataSpace);
-  }
-
-
-  /**
-   * @return The semispace we are currently copying from
-   * (or copied from at last major GC)
-   */
-  static CopySpace fromSpace() {
-    return survivorSpace;
-  }
-
-  /**
-   * @return Space descriptor for from-space
-   */
-  static int fromSpaceDesc() {
-    return SURVIVOR;
   }
 
   /****************************************************************************
@@ -129,15 +115,11 @@ import org.vmmagic.pragma.*;
   @Override
   @Inline
   public void collectionPhase(short phaseId) {
-  	Log.write("[MV4 P]:[CollectionPhase]: PhaseId: ");
   	Log.writeln(phaseId);
     if (traceFullHeap()) {
       if (phaseId == PREPARE) {
         super.collectionPhase(phaseId);
         survivorSpace.prepare(true);
-//        if (gcFullHeap) {
-//        	oldGenSpace.prepare(gcFullHeap);
-//        } 
         matureTrace.prepare();
         return;
       }
@@ -146,15 +128,9 @@ import org.vmmagic.pragma.*;
         return;
       }
       if (phaseId == RELEASE) {
-      	Log.writeln("MV4 P Release");
-      	survivorSpace.printUsageMB();
         matureTrace.release();
-//        if()
         survivorSpace.release();
-        survivorSpace.printUsageMB();
         super.collectionPhase(phaseId);
-        Log.writeln("After M4 release anna");
-        survivorSpace.printUsageMB();
         return;
       }
     }
@@ -163,13 +139,6 @@ import org.vmmagic.pragma.*;
   
   @Override
   public final boolean collectionRequired(boolean spaceFull, Space space) {
-  	if(survivorSpace.reservedPages()>10) {
-  		nextGCFullHeap = true;
-  		return true;
-  	}
-  	if (oldGenSpace.reservedPages() > 30) {
-  		emergencyCollection = true;
-  	}
   	return super.collectionRequired(spaceFull, space);
   }
 
@@ -202,7 +171,7 @@ import org.vmmagic.pragma.*;
 
   @Override
   public int getMaturePhysicalPagesAvail() {
-    return survivorSpace.availablePhysicalPages() >> 1;
+    return survivorSpace.availablePhysicalPages();
   }
 
   /**************************************************************************

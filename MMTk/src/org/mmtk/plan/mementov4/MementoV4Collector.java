@@ -97,9 +97,6 @@ public class MementoV4Collector extends GenCollector {
             allocator == MementoV4.ALLOC_MATURE_MAJORGC);
       }
       if (allocator == MementoV4.ALLOC_MATURE_MAJORGC) {
-      	MementoV4.oldGenSpace.printUsageMB();
-      	Log.write("Old Gen reserved spaces: ");
-      	Log.writeln(MementoV4.oldGenSpace.reservedPages());
       	return oldGen.alloc(bytes, align, offset);
       }
       return mature.alloc(bytes, align, offset);
@@ -121,9 +118,6 @@ public class MementoV4Collector extends GenCollector {
     else if (Space.isInSpace(MementoV4.OLDGEN, object)) {
     	MementoV4.oldGenSpace.postCopy(object, allocator == MementoV4.ALLOC_MATURE_MAJORGC);
     }
-//    else if (allocator == MementoV4.ALLOC_MATURE_MAJORGC) {
-//    else MementoV4.oldGenSpace.postCopy(object, allocator == MementoV4.ALLOC_MATURE_MAJORGC);
-//    }
     else if (MementoV4.IGNORE_REMSETS)
       MementoV4.immortalSpace.traceObject(getCurrentTrace(), object); // FIXME this does not look right
     if (Gen.USE_OBJECT_BARRIER)
@@ -141,29 +135,20 @@ public class MementoV4Collector extends GenCollector {
    */
   @Override
   public void collectionPhase(short phaseId, boolean primary) {
-  	Log.write("[MV4 C]:[CollectionPhase]: PhaseId:");
-  	Log.writeln(phaseId);
-  	Log.writeln("Space Usage");
   	mature.getSpace().printUsageMB();
     if (global().traceFullHeap()) {
       if (phaseId == MementoV4.PREPARE) {
-      	Log.writeln("MC Prepare Start");
       	matureTrace.prepare();
       	oldGen.prepare();
         super.collectionPhase(phaseId, primary);
-        Log.writeln("MC Prepare Complete");
       }
       if (phaseId == MementoV4.CLOSURE) {
-      	Log.writeln("MC Closure Start");
         matureTrace.completeTrace();
-        Log.writeln("Closure complete");
         return;
       }
       if (phaseId == MementoV4.RELEASE) {
-      	Log.writeln("MC Release Start");
         matureTrace.release();
         super.collectionPhase(phaseId, primary);
-        Log.writeln("MC Release Complete");
         mature.getSpace().printUsageMB();
         return;
       }

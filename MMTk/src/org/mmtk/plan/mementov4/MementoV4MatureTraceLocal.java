@@ -68,7 +68,6 @@ public final class MementoV4MatureTraceLocal extends GenMatureTraceLocal {
   @Override
   public boolean isLive(ObjectReference object) {
     if (object.isNull()) return false;
-    // ! Logic change done here
     if (Space.isInSpace(MementoV4.SURVIVOR, object))
       return MementoV4.survivorSpace.isLive(object);
     if (Space.isInSpace(MementoV4.OLDGEN, object))

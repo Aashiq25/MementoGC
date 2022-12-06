@@ -92,7 +92,6 @@ public class MementoV4Mutator extends GenMutator {
   @Inline
   public final Address alloc(int bytes, int align, int offset, int allocator, int site) {
     if (allocator == MementoV4.ALLOC_MATURE) {
-    	Log.writeln("Allocating mature");
       return mature.alloc(bytes, align, offset);
     }
     return super.alloc(bytes, align, offset, allocator, site);
@@ -109,8 +108,6 @@ public class MementoV4Mutator extends GenMutator {
 
   @Override
   public final Allocator getAllocatorFromSpace(Space space) {
-  	Log.write("AM I used? : getAllocatorFromSpace Space name: ");
-  	Log.writeln(space.getName());
     if (space == MementoV4.survivorSpace) return mature;
     if (space == MementoV4.oldGenSpace) return oldGen;
     return super.getAllocatorFromSpace(space);
@@ -127,23 +124,6 @@ public class MementoV4Mutator extends GenMutator {
    */
   @Override
   public void collectionPhase(short phaseId, boolean primary) {
-  	Log.write("[MC4] Collection phase phaseId: ");
-  	Log.writeln(phaseId);
-//    if (global().traceFullHeap()) {
-//    		if (phaseId == MementoV4.PREPARE) {
-//    			super.collectionPhase(phaseId, primary);
-//    			if(global().gcFullHeap) {
-//    				oldGen.prepare();
-//    			}
-//    		}
-//      if (phaseId == MementoV4.RELEASE) {
-//        super.collectionPhase(phaseId, primary);
-		/*
-		 * //// if (global().gcFullHeap) { //// Log.writeln("CP Mut OG"); ////
-		 * oldGen.release(); //// }
-		 *///        return;
-//      }
-//    }
 
     super.collectionPhase(phaseId, primary);
   }
