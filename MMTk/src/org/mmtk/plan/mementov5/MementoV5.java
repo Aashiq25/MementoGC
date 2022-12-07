@@ -63,6 +63,9 @@ public class MementoV5 extends GenCopy {
   public static final int ALLOC_OLD_GEN = StopTheWorld.ALLOCATORS + 4;
 
   public static final int SCAN_OLD_GEN  = 2;
+
+
+
   
   /****************************************************************************
    *

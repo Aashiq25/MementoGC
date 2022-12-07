@@ -16,6 +16,7 @@ import org.mmtk.plan.generational.GenMutator;
 import org.mmtk.plan.generational.copying.GenCopyMutator;
 import org.mmtk.policy.MarkSweepLocal;
 import org.mmtk.policy.Space;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.vm.VM;
 import org.vmmagic.pragma.*;
@@ -78,6 +79,9 @@ public class MementoV5Mutator extends GenCopyMutator {
   @Inline
   public final Address alloc(int bytes, int align, int offset, int allocator, int site) {
     if (allocator == MementoV5.ALLOC_OLD_GEN) {
+      global().mementoLog("[MementoV5Mutator.java] Allocating in OldGen Allocator: ");
+      global().mementoLog(allocator);
+      global().mementoLog("\n");
       return oldGen.alloc(bytes, align, offset);
     }
     return super.alloc(bytes, align, offset, allocator, site);

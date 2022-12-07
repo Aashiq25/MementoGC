@@ -15,6 +15,7 @@ package org.mmtk.plan.generational.copying;
 import org.mmtk.plan.generational.GenMutator;
 import org.mmtk.policy.CopyLocal;
 import org.mmtk.policy.Space;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.vm.VM;
 
@@ -87,6 +88,11 @@ public class GenCopyMutator extends GenMutator {
   @Inline
   public Address alloc(int bytes, int align, int offset, int allocator, int site) {
     if (allocator == GenCopy.ALLOC_MATURE) {
+
+      global().mementoLog("[GenCopyMutator.java] Allocating in Mature Allocator: ");
+      global().mementoLog(allocator);
+      global().mementoLog("\n");
+
       return mature.alloc(bytes, align, offset);
     }
     return super.alloc(bytes, align, offset, allocator, site);

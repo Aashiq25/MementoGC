@@ -16,6 +16,7 @@ import org.mmtk.plan.*;
 import org.mmtk.policy.CopyLocal;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.HeaderByte;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.deque.*;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.utility.statistics.Stats;
@@ -88,6 +89,9 @@ import org.vmmagic.unboxed.*;
   public Address alloc(int bytes, int align, int offset, int allocator, int site) {
     if (allocator == Gen.ALLOC_NURSERY) {
       if (Stats.GATHER_MARK_CONS_STATS) Gen.nurseryCons.inc(bytes);
+      global().mementoLog("[GenMutator.java] Allocating in nursery Allocator: ");
+      global().mementoLog(allocator);
+      global().mementoLog("\n");
       return nursery.alloc(bytes, align, offset);
     }
     return super.alloc(bytes, align, offset, allocator, site);

@@ -20,6 +20,7 @@ import org.mmtk.plan.generational.copying.GenCopyCollector;
 import org.mmtk.policy.MarkSweepLocal;
 import org.mmtk.policy.Space;
 import org.mmtk.utility.HeaderByte;
+import org.mmtk.utility.Log;
 import org.mmtk.utility.alloc.Allocator;
 import org.mmtk.utility.statistics.Stats;
 import org.mmtk.vm.VM;
@@ -93,6 +94,9 @@ public class MementoV5Collector extends GenCopyCollector {
             allocator == MementoV5.ALLOC_MATURE_MAJORGC || allocator == MementoV5.ALLOC_OLD_GEN);
       }
       if (allocator == MementoV5.ALLOC_OLD_GEN) {
+        global().mementoLog("[MementoV5Collector.java] Collector copyAlloc Allocator: ");
+        global().mementoLog(allocator);
+        global().mementoLog("\n");
         return oldGen.alloc(bytes, align, offset);
       }
       return super.allocCopy(original, bytes, align, offset, allocator);

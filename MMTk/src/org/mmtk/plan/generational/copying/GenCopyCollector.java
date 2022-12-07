@@ -90,6 +90,10 @@ public class GenCopyCollector extends GenCollector {
         VM.assertions._assert(allocator == GenCopy.ALLOC_MATURE_MINORGC ||
             allocator == GenCopy.ALLOC_MATURE_MAJORGC);
       }
+      global().mementoLog("[GenCopyCollector.java] Collector copyAlloc Allocator: ");
+      global().mementoLog(allocator);
+      global().mementoLog("\n");
+
       return mature.alloc(bytes, align, offset);
     }
   }
