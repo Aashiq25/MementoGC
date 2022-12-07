@@ -66,7 +66,7 @@ public class GenCopyMatureTraceLocal extends GenMatureTraceLocal {
     if (Space.isInSpace(GenCopy.MS0, object))
       return GenCopy.matureSpace0.traceObject(this, object, MementoV5.ALLOC_MATURE_MAJORGC);
     if (Space.isInSpace(GenCopy.MS1, object))
-      return GenCopy.matureSpace1.traceObject(this, object, MementoV5.ALLOC_MATURE_MAJORGC);
+      return GenCopy.matureSpace1.traceObject(this, object, MementoV5.ALLOC_OLD_GEN);
 
     return super.traceObject(object);
   }
