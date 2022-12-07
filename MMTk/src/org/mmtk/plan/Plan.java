@@ -65,6 +65,21 @@ public abstract class Plan {
    *
    */
 
+  /* Memento Globals */
+  public static final boolean showLogs = true;
+
+  public static void mementoLog(String s) {
+      if (showLogs) {
+          Log.write(s);
+      }
+  }
+
+    public static void mementoLog(int i) {
+        if (showLogs) {
+            Log.write(i);
+        }
+    }
+
   /* GC State */
   public static final int NOT_IN_GC = 0; // this must be zero for C code
   public static final int GC_PREPARE = 1; // before setup and obtaining root
