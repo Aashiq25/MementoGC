@@ -51,7 +51,7 @@ public class MementoV5Mutator extends GenCopyMutator {
    * "pretenure" objects into this space which is otherwise used
    * only by the collector)
    */
-  private final MarkSweepLocal mature;
+  private final MarkSweepLocal oldGen;
 
 
   /****************************************************************************
@@ -63,7 +63,7 @@ public class MementoV5Mutator extends GenCopyMutator {
    * Constructor
    */
   public MementoV5Mutator() {
-    mature = new MarkSweepLocal(MementoV5.msSpace);
+    oldGen = new MarkSweepLocal(MementoV5.msSpace);
   }
 
   /****************************************************************************
@@ -78,7 +78,7 @@ public class MementoV5Mutator extends GenCopyMutator {
   @Inline
   public final Address alloc(int bytes, int align, int offset, int allocator, int site) {
     if (allocator == MementoV5.ALLOC_OLD_GEN) {
-      return mature.alloc(bytes, align, offset);
+      return oldGen.alloc(bytes, align, offset);
     }
     return super.alloc(bytes, align, offset, allocator, site);
   }
@@ -96,7 +96,7 @@ public class MementoV5Mutator extends GenCopyMutator {
 
   @Override
   public Allocator getAllocatorFromSpace(Space space) {
-    if (space == MementoV5.msSpace) return mature;
+    if (space == MementoV5.msSpace) return oldGen;
     return super.getAllocatorFromSpace(space);
   }
 
@@ -114,12 +114,12 @@ public class MementoV5Mutator extends GenCopyMutator {
     if (global().traceOldGen()) {
       if (phaseId == MementoV5.PREPARE) {
         super.collectionPhase(phaseId, primary);
-        if (global().gcFullHeap) mature.prepare();
+        if (global().gcFullHeap) oldGen.prepare();
         return;
       }
 
       if (phaseId == MementoV5.RELEASE) {
-        if (global().gcFullHeap) mature.release();
+        if (global().gcFullHeap) oldGen.release();
         super.collectionPhase(phaseId, primary);
         return;
       }
@@ -131,7 +131,7 @@ public class MementoV5Mutator extends GenCopyMutator {
   @Override
   public void flush() {
     super.flush();
-    mature.flush();
+    oldGen.flush();
   }
 
   /****************************************************************************
