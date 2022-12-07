@@ -92,7 +92,7 @@ public class MementoV5 extends GenCopy {
   @Override
   public final void collectionPhase(short phaseId) {
   	msSpace.printUsageMB();
-    if (traceOldGen()) {
+    if (false && traceOldGen()) {
       if (phaseId == PREPARE) {
         super.collectionPhase(phaseId);
         oldGenTrace.prepare();

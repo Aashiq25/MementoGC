@@ -127,7 +127,7 @@ public class MementoV5Collector extends GenCopyCollector {
   @NoInline
   public void collectionPhase(short phaseId, boolean primary) {
     global().msSpace.printUsageMB();
-    if (global().traceOldGen()) {
+    if (false && global().traceOldGen()) {
       if (phaseId == MementoV5.PREPARE) {
         super.collectionPhase(phaseId, primary);
         oldGenTrace.prepare();
@@ -158,7 +158,7 @@ public class MementoV5Collector extends GenCopyCollector {
   @Override
   @Inline
   public final TraceLocal getFullHeapTrace() {
-    return oldGenTrace;
+    return super.getFullHeapTrace();
   }
 
   /****************************************************************************
