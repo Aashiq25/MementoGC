@@ -116,21 +116,6 @@ public class MementoV5 extends GenCopy {
     return traceFullHeap() && msSpace.reservedPages() > 10;
   }
 
-  /*****************************************************************************
-   *
-   * Accounting
-   */
-
-  /**
-   * Return the number of pages reserved for use given the pending
-   * allocation.
-   */
-  @Inline
-  @Override
-  public int getPagesUsed() {
-    return msSpace.reservedPages() + super.getPagesUsed();
-  }
-
 
   /*****************************************************************************
    *
@@ -141,9 +126,6 @@ public class MementoV5 extends GenCopy {
   public boolean willNeverMove(ObjectReference object) {
     if (Space.isInSpace(MS, object))
       return true;
-//    if (Space.isInSpace(GenCopy.toSpaceDesc(), object)) {
-//      return true;
-//    }
     return super.willNeverMove(object);
   }
 
