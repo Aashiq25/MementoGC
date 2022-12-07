@@ -141,9 +141,9 @@ public class MementoV5 extends GenCopy {
   public boolean willNeverMove(ObjectReference object) {
     if (Space.isInSpace(MS, object))
       return true;
-    if (Space.isInSpace(GenCopy.toSpaceDesc(), object)) {
-      return false;
-    }
+//    if (Space.isInSpace(GenCopy.toSpaceDesc(), object)) {
+//      return true;
+//    }
     return super.willNeverMove(object);
   }
 

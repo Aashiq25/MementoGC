@@ -93,7 +93,7 @@ public class GenCopyMatureTraceLocal extends GenMatureTraceLocal {
   @Override
   public boolean willNotMoveInCurrentCollection(ObjectReference object) {
     if (Space.isInSpace(GenCopy.toSpaceDesc(), object)) {
-      return false;
+      return true;
     }
     if (Space.isInSpace(GenCopy.fromSpaceDesc(), object)) {
       return false;
