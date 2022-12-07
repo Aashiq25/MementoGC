@@ -75,6 +75,8 @@ public class MementoV5 extends GenCopy {
   public MementoV5() {
     super();
     Options.noReferenceTypes.setDefaultValue(true);
+    Options.noFinalizer.setDefaultValue(true);
+    Options.variableSizeHeap.setValue(false);
   }
   
   /** The trace class for a full-heap collection */

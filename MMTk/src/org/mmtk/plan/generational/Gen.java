@@ -100,7 +100,7 @@ public abstract class Gen extends StopTheWorld {
 
   /* The nursery space is where all new objects are allocated by default */
   private static final VMRequest vmRequest = USE_DISCONTIGUOUS_NURSERY ? VMRequest.discontiguous() : VMRequest.highFraction(NURSERY_VM_FRACTION);
-  public static final CopySpace nurserySpace = new CopySpace("nursery", false, VMRequest.fixedSize(5));
+  public static final CopySpace nurserySpace = new CopySpace("nursery", false, vmRequest);
 
   public static final int NURSERY = nurserySpace.getDescriptor();
   private static final Address NURSERY_START = nurserySpace.getStart();
