@@ -109,10 +109,12 @@ public class MementoV5Collector extends GenCopyCollector {
       int bytes, int allocator) {
     if (allocator == Plan.ALLOC_LOS)
       Plan.loSpace.initializeHeader(object, false);
-    else
+    else if (allocator == MementoV5.ALLOC_OLD_GEN) {
       MementoV5.msSpace.postCopy(object, allocator == MementoV5.ALLOC_OLD_GEN);
+    }
     if (Gen.USE_OBJECT_BARRIER)
       HeaderByte.markAsUnlogged(object);
+    super.postCopy(object, typeRef, bytes, allocator);
   }
 
   /*****************************************************************************
