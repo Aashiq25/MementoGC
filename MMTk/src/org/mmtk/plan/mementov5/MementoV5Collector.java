@@ -156,6 +156,8 @@ public class MementoV5Collector extends GenCopyCollector {
   @Override
   @Inline
   public final TraceLocal getFullHeapTrace() {
+  	if (global().traceOldGen())
+  		return oldGenTrace;
     return super.getFullHeapTrace();
   }
 
